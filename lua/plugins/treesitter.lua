@@ -1,6 +1,6 @@
 return {
   "nvim-treesitter/nvim-treesitter",
-  commit = "90cd658",
+  branch = "main",
   main = "nvim-treesitter",
   -- build = ":TSUpdate",
   event = { "BufReadPost", "BufNewFile" },
@@ -40,13 +40,7 @@ return {
 
         --------------------[ treesitter parsers ]-------------------------------
         if vim.fn.executable "tree-sitter" ~= 1 then
-          vim.api.nvim_echo({
-            {
-              "tree-sitter CLI not found. Parsers cannot be installed.",
-              "ErrorMsg",
-            },
-          }, true, {})
-          return false
+          return -- config() already reported the missing CLI once
         end
 
         if not vim.treesitter.language.get_lang(ft) then
@@ -77,10 +71,7 @@ return {
       "tsx",
       "yaml",
       "html",
-      "css",
       "prisma",
-      "markdown",
-      "markdown_inline",
       "svelte",
       "graphql",
       "bash",
@@ -89,7 +80,6 @@ return {
       "dockerfile",
       "gitignore",
       "query",
-      "vimdoc",
       "c",
       "ruby",
       "rust",

@@ -1,5 +1,6 @@
 return {
     'nvim-telescope/telescope.nvim', version = '*',
+    cmd = 'Telescope',
     dependencies = {
         'nvim-lua/plenary.nvim',
         -- optional but recommended
@@ -13,6 +14,7 @@ return {
         telescope.setup({
           defaults = {
             path_display = { "smart" },
+            cache_picker = { num_pickers = 10 }, -- keep recent pickers resumable, not just the last one
             mappings = {
               i = {
                 ["<C-k>"] = actions.move_selection_previous, -- move to prev result

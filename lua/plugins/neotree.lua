@@ -6,5 +6,13 @@ return {
     "MunifTanjim/nui.nvim",
     "nvim-tree/nvim-web-devicons",
   },
-  lazy = false, -- neo-tree will lazily load itself
+  cmd = 'Neotree',
+  opts = {
+    filesystem = {
+      follow_current_file = {
+        enabled = true,
+        leave_dirs_open = false, -- close auto-expanded dirs when leaving them
+      },
+    },
+  },
 }

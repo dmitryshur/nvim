@@ -15,7 +15,11 @@ require('lazy').setup({
   require 'plugins.treesitter',
   require 'plugins.telescope',
   require 'plugins.lsp',
-  require 'plugins.blink'
+  require 'plugins.blink',
+  require 'plugins.diffview',
+  require 'plugins.neogit',
+  require 'plugins.gitsigns',
+  require 'plugins.conform'
 });
 
 require 'core.options'
