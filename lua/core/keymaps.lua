@@ -14,6 +14,9 @@ vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left wind
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+-- `<C-w>p` (last accessed window) rather than `<C-w>w` (cycle), so it toggles
+-- back and forth instead of walking past the window you came from.
+vim.keymap.set('n', '<leader>w', '<C-w>p', { desc = 'Switch to last accessed window' })
 vim.keymap.set('n', '<leader>n', ':Neotree filesystem reveal left toggle<CR>', { desc = 'Toggle Neo-tree' })
 
 vim.keymap.set('n', '<leader>f', function() require('telescope.builtin').find_files() end, { desc = 'Telescope find files' })
@@ -32,14 +35,33 @@ vim.keymap.set('n', '<tab>', function() require('telescope.builtin').buffers() e
 vim.keymap.set('n', '<leader>r', function() require('telescope.builtin').resume() end, { desc = 'Telescope resume' })
 
 vim.keymap.set('n', '<leader>gg', ':Neogit<CR>', { desc = 'Open Neogit' })
-vim.keymap.set('n', '<leader>gd', function()
-  if require('diffview.lib').get_current_view() then
-    vim.cmd 'DiffviewClose'
-  else
-    vim.cmd 'DiffviewOpen'
+
+-- Diffview lives in its own tabpage, so `:q` only peels off one window at a
+-- time. DiffviewClose tears the whole tab down in one go; toggling through it
+-- means the same key that opened the view also closes it.
+local toggle_diffview = function(open_cmd)
+  return function()
+    if require('diffview.lib').get_current_view() then
+      vim.cmd 'DiffviewClose'
+    else
+      vim.cmd(open_cmd)
+    end
   end
-end, { desc = 'Toggle git diff view' })
-vim.keymap.set('n', '<leader>gh', ':DiffviewFileHistory %<CR>', { desc = 'Git history for current file' })
+end
+
+vim.keymap.set('n', '<leader>gd', toggle_diffview 'DiffviewOpen', { desc = 'Toggle git diff view' })
+vim.keymap.set('n', '<leader>gh', toggle_diffview 'DiffviewFileHistory %', { desc = 'Toggle git history for current file' })
 vim.keymap.set('n', '<leader>gb', ':Gitsigns blame<CR>', { desc = 'Git blame file' })
 
 vim.keymap.set({ 'n', 'x' }, '<leader>=', function() require('conform').format { async = true, lsp_format = 'fallback' } end, { desc = 'Format buffer' })
+
+-- Same key toggles the floating terminal open and closed from anywhere,
+-- including from inside the terminal itself (terminal mode). `<Cmd>` runs
+-- without leaving the current mode, so insert/terminal mode are unaffected.
+vim.keymap.set({ 'n', 'i', 't' }, [[<C-\>]], '<Cmd>ToggleTerm<CR>', { desc = 'Toggle floating terminal' })
+
+vim.keymap.set('n', '<leader>p', function()
+  local path = vim.fn.expand '%:.'
+  vim.fn.setreg('+', path)
+  vim.notify(path, vim.log.levels.INFO, { title = 'Copied relative path' })
+end, { desc = 'Copy relative path of current file' })

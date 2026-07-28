@@ -19,7 +19,8 @@ require('lazy').setup({
   require 'plugins.diffview',
   require 'plugins.neogit',
   require 'plugins.gitsigns',
-  require 'plugins.conform'
+  require 'plugins.conform',
+  require 'plugins.toggleterm'
 });
 
 require 'core.options'

@@ -8,7 +8,7 @@ return {
     -- configure lualine with modified theme
     lualine.setup({
       options = {
-        theme = "auto", -- picks up the catppuccin flavour from the active colorscheme
+        theme = "auto", -- picks up the active colorscheme
       },
       sections = {
         lualine_x = {

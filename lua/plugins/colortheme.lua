@@ -1,13 +1,20 @@
 return {
-  'catppuccin/nvim',
-  name = 'catppuccin',
+  'rebelot/kanagawa.nvim',
   lazy = false,
   priority = 1000,
-  config = function()
-    require('catppuccin').setup({
-      flavour = 'frappe', -- latte, frappe, macchiato, mocha
-    })
-
-    vim.cmd.colorscheme 'catppuccin'
+  opts = {
+    theme = 'dragon', -- wave, dragon, lotus
+    background = { dark = 'dragon', light = 'lotus' },
+    transparent = true, -- let Ghostty's background-opacity show through
+    overrides = function(colors)
+      return {
+        -- dimmer neo-tree indent guides (default links to NonText)
+        NeoTreeIndentMarker = { fg = colors.palette.dragonBlack5 },
+      }
+    end,
+  },
+  config = function(_, opts)
+    require('kanagawa').setup(opts)
+    vim.cmd.colorscheme 'kanagawa-dragon'
   end
 }
