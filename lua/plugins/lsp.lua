@@ -83,6 +83,51 @@ return {
         })
       end
 
+      -- nvim-lspconfig 2.x dropped :LspRestart and Neovim 0.12 ships no built-in
+      -- :Lsp, so restore it. Needed mostly for writes that bypass Neovim (an agent
+      -- editing files, a rebase): a server keeps its own copy of every file it read
+      -- off disk, and only the buffers Neovim has open stay in sync via
+      -- didOpen/didChange. tsgo relies entirely on the client to tell it a file
+      -- changed, and Neovim doesn't by default, so an unopened dependency goes stale
+      -- and reports errors `tsc` never sees.
+      vim.api.nvim_create_user_command('LspRestart', function()
+        local stopped = vim.lsp.get_clients()
+
+        for _, client in ipairs(stopped) do
+          client:stop()
+        end
+
+        local function all_exited()
+          for _, client in ipairs(stopped) do
+            if vim.lsp.get_client_by_id(client.id) then return false end
+          end
+          return true
+        end
+
+        -- stop() is async, and the attach path skips a buffer whose config is
+        -- already running, so re-attaching too early silently does nothing. Ask
+        -- politely first -- a forced kill exits non-zero, which makes Neovim warn
+        -- on every restart -- then force whatever ignored the shutdown, since a
+        -- wedged server is half the reason to reach for this command.
+        if not vim.wait(3000, all_exited, 50) then
+          for _, client in ipairs(stopped) do
+            if vim.lsp.get_client_by_id(client.id) then client:stop(true) end
+          end
+
+          vim.wait(2000, all_exited, 50)
+        end
+
+        -- What vim.lsp.enable() itself uses to attach pre-existing buffers. Unlike
+        -- :edit it leaves unsaved changes alone, and it covers every loaded buffer
+        -- rather than only the current one.
+        vim.cmd.doautoall 'nvim.lsp.enable FileType'
+      end, { desc = 'Restart all LSP clients so they re-read files from disk' })
+
+      -- Deliberately global rather than buffer-local like the LspAttach maps below:
+      -- a server that crashed or never attached is exactly when this is needed, and
+      -- a buffer-local map wouldn't exist in that case.
+      vim.keymap.set('n', '<leader>lr', '<cmd>LspRestart<CR>', { desc = '[L]sp [R]estart' })
+
       -- Runs when an LSP attaches to a buffer, to configure that buffer.
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
