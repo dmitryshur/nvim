@@ -43,15 +43,21 @@ return {
           return -- config() already reported the missing CLI once
         end
 
-        if not vim.treesitter.language.get_lang(ft) then
+        -- get_installed()/get_available()/install() all speak parser (language)
+        -- names, not filetypes. Most of the time they're spelled the same, which
+        -- hides the difference -- but typescriptreact maps to `tsx`,
+        -- javascriptreact to `javascript`, sh to `bash`. Passing `ft` there
+        -- matched nothing for those, so highlighting silently never started.
+        local lang = vim.treesitter.language.get_lang(ft)
+        if not lang then
           return
         end
 
-        if vim.list_contains(treesitter.get_installed(), ft) then
-          highlight(buf, ft)
-        elseif vim.list_contains(treesitter.get_available(), ft) then
-          treesitter.install(ft):await(function()
-            highlight(buf, ft)
+        if vim.list_contains(treesitter.get_installed(), lang) then
+          highlight(buf, lang)
+        elseif vim.list_contains(treesitter.get_available(), lang) then
+          treesitter.install(lang):await(function()
+            highlight(buf, lang)
           end)
         end
       end,

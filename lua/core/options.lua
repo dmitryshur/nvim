@@ -12,6 +12,7 @@ option.autoindent = true -- copy indent from current line when starting new one
 
 -- line wrapping
 option.wrap = true -- enable line wrapping
+option.colorcolumn = "100" -- vertical ruler marking the 100 character mark (<leader>1 toggles it)
 
 -- search settings
 option.ignorecase = true -- ignore case when searching

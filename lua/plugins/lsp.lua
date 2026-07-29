@@ -39,6 +39,50 @@ return {
         require('telescope.builtin').lsp_references()
       end
 
+      -- eslint and oxlint advertise `diagnosticProvider`, so Neovim pulls
+      -- diagnostics on every didChange -- i.e. every ~150ms of typing. Worse,
+      -- vim.diagnostic.show() hides the current extmarks *before* it consults
+      -- `update_in_insert`, and defers the redraw to InsertLeave *or*
+      -- CursorHoldI, so a half-typed line visibly churns its diagnostics.
+      -- Skipping the pull while in insert mode freezes them at their last
+      -- computed state instead, and costs nothing: the linters stop re-running
+      -- between keystrokes. InsertLeave then pulls once, for real.
+      local refresh_diagnostics = vim.lsp.diagnostic._refresh
+      local gated_linters = { eslint = true, oxlint = true }
+
+      -- `_refresh` is private. If a future Neovim drops it, skip the gating
+      -- entirely rather than gate pulls we can no longer restart -- stale
+      -- diagnostics forever is a worse failure than the churn we're fixing.
+      if refresh_diagnostics then
+        vim.api.nvim_create_autocmd('LspAttach', {
+          group = vim.api.nvim_create_augroup('lsp-gate-insert-mode-pulls', { clear = true }),
+          callback = function(event)
+            local client = vim.lsp.get_client_by_id(event.data.client_id)
+            if not client or not gated_linters[client.name] or client.insert_pull_gated then return end
+            client.insert_pull_gated = true -- one client serves many buffers; only wrap it once
+
+            local request = client.request
+            client.request = function(self, method, params, handler, bufnr)
+              -- Neovim's pull loop ignores the return value, so claiming
+              -- success keeps the skip from reading as a dead client.
+              if method == 'textDocument/diagnostic' and vim.fn.mode():sub(1, 1) == 'i' then return true, nil end
+              return request(self, method, params, handler, bufnr)
+            end
+          end,
+        })
+
+        vim.api.nvim_create_autocmd('InsertLeave', {
+          group = vim.api.nvim_create_augroup('lsp-pull-after-insert-leave', { clear = true }),
+          callback = function(event)
+            -- `mode()` already reports normal mode by the time InsertLeave
+            -- runs, so the gate above lets these requests through.
+            for _, client in ipairs(vim.lsp.get_clients { bufnr = event.buf, method = 'textDocument/diagnostic' }) do
+              if gated_linters[client.name] then refresh_diagnostics(event.buf, client.id) end
+            end
+          end,
+        })
+      end
+
       -- Runs when an LSP attaches to a buffer, to configure that buffer.
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
@@ -195,6 +239,15 @@ return {
       -- is opened after startup (bare `nvim`, then `:e`/Neotree) that autocmd is
       -- registered too late and never fires -- tools silently stay uninstalled.
       if vim.v.vim_did_enter == 1 then require('mason-tool-installer').check_install() end
+
+      -- How long typing has to settle before didChange goes out (default 150).
+      -- Every pull-diagnostic request rides on a didChange, so this is the
+      -- other half of the insert-mode gating above -- it thins out the
+      -- requests that *do* fire, tsgo's included. Must be set on '*': the
+      -- debounce is per buffer and takes the minimum across attached clients,
+      -- so raising it for eslint alone would change nothing while tsgo and
+      -- tailwindcss sit at the default.
+      vim.lsp.config('*', { flags = { debounce_text_changes = 500 } })
 
       for name, server in pairs(servers) do
         vim.lsp.config(name, server)

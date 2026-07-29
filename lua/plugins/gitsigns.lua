@@ -37,6 +37,10 @@ return {
       map('n', '<leader>gc', toggle_inline_diff, 'Toggle inline diff (all hunks)')
       map('n', '<leader>hs', gitsigns.stage_hunk, 'Stage hunk (again to unstage)')
       map('n', '<leader>hr', gitsigns.reset_hunk, 'Reset hunk')
+      -- Same action on the <leader>g* git prefix. Note this does not shadow the
+      -- built-in `g-` (older text state): that's a bare `g-`, this is the
+      -- three-key sequence <leader>g-.
+      map('n', '<leader>g-', gitsigns.reset_hunk, 'Reset hunk')
       map('n', '<leader>hb', gitsigns.blame_line, 'Blame line')
     end,
   },
