@@ -40,6 +40,7 @@ option.splitbelow = true -- split horizontal window to the bottom
 -- turn off swapfile
 option.swapfile = false
 vim.o.undofile = true
+vim.opt.autoread = true
 
 -- Highlight when yanking (copying) text
 -- `:Ruler` shows or hides the column ruler. A command rather than a keymap because
@@ -67,6 +68,14 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   desc = 'Highlight when yanking (copying) text',
   group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
   callback = function() vim.hl.on_yank() end,
+})
+
+vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter', 'CursorHold', 'TermClose' }, {
+  desc = 'Check for externally changed files',
+  group = vim.api.nvim_create_augroup('check-external-file-changes', { clear = true }),
+  callback = function()
+    if vim.g.SessionLoad ~= 1 then vim.cmd 'checktime' end
+  end,
 })
 
 vim.diagnostic.config {
