@@ -10,54 +10,25 @@ pcall(vim.keymap.del, 'x', 'gra')
 
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
--- Toggle the column ruler. Seeded from whatever core.options set (it runs first),
--- so the width itself stays defined in exactly one place.
+-- Diagnostics are quiet by default (signs and underline only -- see core.options).
+-- This expands the whole buffer to full virtual lines for when you're actually
+-- working through the errors in a file, rather than reading around them.
 --
--- `colorcolumn` is window-local, so flipping only the current window would leave
--- splits disagreeing about whether the ruler is showing. Set the global default
--- too, otherwise windows opened after a toggle come back with the old state.
-local ruler_width = vim.go.colorcolumn
-vim.keymap.set('n', '<leader>1', function()
-  local showing = vim.wo.colorcolumn ~= ''
-  if showing then ruler_width = vim.wo.colorcolumn end
-  local value = showing and '' or ruler_width
-  vim.go.colorcolumn = value
-  for _, win in ipairs(vim.api.nvim_list_wins()) do
-    vim.wo[win].colorcolumn = value
-  end
-end, { desc = 'Toggle the column ruler' })
-
--- Re-run this config's own Lua modules so edits to options/keymaps take effect
--- without restarting. `require` caches, so the modules have to be dropped from
--- package.loaded first.
+-- `vim.diagnostic.config` merges per key, so passing only virtual_lines leaves the
+-- underline, float and severity_sort settings from core.options untouched.
 --
--- Deliberately does NOT re-run init.lua: that would call lazy.setup() a second
--- time. Plugin specs stay owned by lazy -- use `:Lazy reload <plugin>` for those.
---
--- Two things a reload cannot undo, because it only ever *adds*: a keymap or
--- autocmd you deleted from the file stays live until restart (the augroups here
--- all pass clear = true, so those at least don't stack up), and the ruler above
--- resets to the width in core.options rather than keeping its toggled state.
-vim.keymap.set('n', '<leader>0', function()
-  local dropped = {}
-  for name in pairs(package.loaded) do
-    if name == 'core' or name:match '^core%.' then
-      package.loaded[name] = nil
-      dropped[#dropped + 1] = name
-    end
-  end
-
-  local ok, err = pcall(function()
-    require 'core.options'
-    require 'core.keymaps'
-  end)
-
-  if ok then
-    vim.notify(string.format('Reloaded %d module(s)', #dropped), vim.log.levels.INFO, { title = 'Config' })
-  else
-    vim.notify(tostring(err), vim.log.levels.ERROR, { title = 'Config reload failed' })
-  end
-end, { desc = 'Reload config (core modules)' })
+-- `gh` shadows the built-in "start Select mode, charwise" -- Select mode being the
+-- one almost nobody uses on purpose, and `v` is unaffected.
+local diagnostics_expanded = false
+vim.keymap.set('n', 'gh', function()
+  diagnostics_expanded = not diagnostics_expanded
+  vim.diagnostic.config { virtual_lines = diagnostics_expanded }
+  vim.notify(
+    diagnostics_expanded and 'Diagnostics: virtual lines' or 'Diagnostics: signs only',
+    vim.log.levels.INFO,
+    { title = 'Diagnostics' }
+  )
+end, { desc = 'Toggle expanded diagnostics (virtual lines)' })
 
 vim.keymap.set('n', '<backspace>', '<cmd>nohlsearch<CR>')
 vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
@@ -136,15 +107,40 @@ vim.keymap.set('n', '<leader>gr', function() require('core.git_file_diff').pick(
 -- automatic paths use the same formatter for a given filetype.
 local format_buffer = function() require('conform').format { async = true, lsp_format = 'fallback' } end
 
-vim.keymap.set({ 'n', 'x' }, '<leader>2', format_buffer, { desc = 'Format buffer' })
+vim.keymap.set({ 'n', 'x' }, '<leader>1', format_buffer, { desc = 'Format buffer' })
 
 -- Same key toggles the floating terminal open and closed from anywhere,
 -- including from inside the terminal itself (terminal mode). `<Cmd>` runs
 -- without leaving the current mode, so insert/terminal mode are unaffected.
 vim.keymap.set({ 'n', 'i', 't' }, [[<C-\>]], '<Cmd>ToggleTerm<CR>', { desc = 'Toggle floating terminal' })
 
+-- Harpoon: a short, ordered list of files scoped to the cwd, so this project and
+-- the next one keep separate lists. Unlike marks A-Z, which are one global
+-- namespace shared across every project, and unlike the buffer list, which
+-- core.buffer_limit prunes out from under you.
+--
+-- The `require` is what pulls the plugin in (no `event` on the spec), matching how
+-- conform and telescope are loaded. Behaviour lives in core.harpoon; `<leader>b`
+-- is a bare prefix on purpose, so none of these wait for timeoutlen.
+vim.keymap.set('n', '<leader>bb', function() require('core.harpoon').toggle() end, { desc = 'Harpoon: pin/unpin file' })
+vim.keymap.set('n', '<leader>bl', function() require('core.harpoon').list() end, { desc = 'Harpoon: list files' })
+-- Clears immediately, with no confirmation and no undo -- the notification's count
+-- is the only trace of what was there.
+vim.keymap.set('n', '<leader>br', function() require('core.harpoon').clear() end, { desc = 'Harpoon: remove all' })
+
 vim.keymap.set('n', '<leader>p', function()
   local path = vim.fn.expand '%:.'
   vim.fn.setreg('+', path)
   vim.notify(path, vim.log.levels.INFO, { title = 'Copied relative path' })
 end, { desc = 'Copy relative path of current file' })
+
+-- Sessions. persistence writes one per directory (and git branch) on exit, but
+-- nothing is restored automatically -- starting nvim always gives a clean slate
+-- and these keys are the way back. `<leader>s` is a bare prefix on purpose: no
+-- single-key `<leader>s` mapping exists, so none of these wait for timeoutlen.
+vim.keymap.set('n', '<leader>ss', function() require('persistence').load() end, { desc = 'Restore session for this directory' })
+vim.keymap.set('n', '<leader>sl', function() require('persistence').load { last = true } end, { desc = 'Restore last session (any directory)' })
+vim.keymap.set('n', '<leader>sp', function() require('persistence').select() end, { desc = 'Pick a session to restore' })
+-- Escape hatch: after a throwaway detour (opening one unrelated file, a big
+-- refactor you abandoned) this leaves the saved session as it was on disk.
+vim.keymap.set('n', '<leader>sd', function() require('persistence').stop() end, { desc = "Don't save the session on exit" })

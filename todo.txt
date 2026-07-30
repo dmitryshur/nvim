@@ -1,7 +1,3 @@
-* undo files
-* is it possible to save recently open files?
-* limit buffers
-* config options for telescope. file names are a mess
 * picker for last searches
 * bookmarks across files
 * measure performance

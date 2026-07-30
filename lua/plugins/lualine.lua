@@ -5,6 +5,31 @@ return {
     local lualine = require("lualine")
     local lazy_status = require("lazy.status") -- to configure lazy pending updates count
 
+    -- Shows the harpoon slot when the current file is pinned, so <leader>bb's
+    -- effect is visible without opening the list. Empty when it isn't pinned, so
+    -- the statusline stays as it was for everything else.
+    --
+    -- Compares against `display()`, which is already compacted, so the count is
+    -- the slot number you'd see in the list. Cheap enough to run per redraw: a
+    -- handful of string compares over a list that is never long.
+    local function harpoon_slot()
+      local ok, harpoon = pcall(require, "harpoon")
+      if not ok then return "" end
+
+      local path = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":.")
+      if path == "" then return "" end
+
+      local slot = 0
+      for _, line in ipairs(harpoon:list():display()) do
+        if line ~= "" then
+          slot = slot + 1
+          if line == path then return " " .. slot end
+        end
+      end
+
+      return ""
+    end
+
     -- configure lualine with modified theme
     lualine.setup({
       options = {
@@ -34,6 +59,10 @@ return {
               unnamed = '[No Name]', -- Text to show for unnamed buffers
               newfile = '[New]',     -- Text to show for newly created file before first write
             }
+          },
+          {
+            harpoon_slot,
+            color = { fg = require("jetbrains.palette").link_text },
           }
         }
       },

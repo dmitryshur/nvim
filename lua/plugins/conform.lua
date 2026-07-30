@@ -1,6 +1,6 @@
 return {
   'stevearc/conform.nvim',
-  -- No `event` trigger: formatting is manual only (<leader>2), so the plugin is
+  -- No `event` trigger: formatting is manual only (<leader>1), so the plugin is
   -- loaded by lazy's require hook when the keymap calls require('conform').
   -- BufWritePre would only have pulled it in early for a format_on_save that no
   -- longer exists.

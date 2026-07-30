@@ -24,8 +24,12 @@ require('lazy').setup({
   require 'plugins.neogit',
   require 'plugins.gitsigns',
   require 'plugins.conform',
-  require 'plugins.toggleterm'
+  require 'plugins.toggleterm',
+  require 'plugins.persistence',
+  require 'plugins.harpoon'
 });
 
 require 'core.options'
 require 'core.keymaps'
+require 'core.buffer_limit'
+require 'core.mark_signs'
