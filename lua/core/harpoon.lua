@@ -17,15 +17,7 @@
 local UNPIN_KEY = '<C-x>'
 local SEPARATOR = '  '
 
--- Filename is the column that has to hold a stable width -- it's what the eye runs
--- down -- so it takes a share of the window, clamped to stay sane on a narrow pane
--- and to stop growing once it's wider than any real name.
-local FILENAME_MIN, FILENAME_MAX, FILENAME_SHARE = 14, 34, 0.34
-
-local DEFAULT_LINKS = {
-  TelescopeHarpoonFile = 'Directory',
-  TelescopeHarpoonDirectory = 'Comment',
-}
+local columns = require 'core.picker_columns'
 
 ----------------------------------------------------------------------- list --
 
@@ -65,45 +57,29 @@ end
 
 -------------------------------------------------------------------- display --
 
-local function filename_width(_, max_columns)
-  return math.max(FILENAME_MIN, math.min(FILENAME_MAX, math.floor(max_columns * FILENAME_SHARE)))
-end
-
--- The directory takes everything left over, and sits last so its padding is
--- trailing whitespace rather than a visible gap mid-row.
-local function directory_width(self, max_columns)
-  return math.max(8, max_columns - filename_width(self, max_columns) - #SEPARATOR)
-end
-
-local links_applied = false
-
--- Built per row: telescope's displayer resolves each column width once and keeps
--- it, so a shared instance would go on using the width it measured in the first
--- picker it rendered.
-local function build_displayer()
-  if not links_applied then
-    for group, target in pairs(DEFAULT_LINKS) do
-      vim.api.nvim_set_hl(0, group, { link = target, default = true })
-    end
-    links_applied = true
-  end
-
-  return require('telescope.pickers.entry_display').create {
-    separator = SEPARATOR,
-    items = {
-      { width = filename_width },
-      { width = directory_width },
-    },
-  }
-end
+-- Filename holds a stable width -- it's what the eye runs down -- while the
+-- directory takes everything left over and sits last, so its padding is trailing
+-- whitespace rather than a visible gap mid-row.
+local filename_width = columns.share(0.34, 14, 34)
+local build_displayer = columns.displayer {
+  separator = SEPARATOR,
+  links = {
+    TelescopePickerFile = 'Directory',
+    TelescopePickerDirectory = 'Comment',
+  },
+  items = {
+    { width = filename_width },
+    { width = columns.remaining({ filename_width }, #SEPARATOR) },
+  },
+}
 
 local function make_display(entry)
   local relative = vim.fn.fnamemodify(entry.value, ':.')
   local directory = vim.fn.fnamemodify(relative, ':h')
 
   return build_displayer() {
-    { vim.fn.fnamemodify(relative, ':t'), 'TelescopeHarpoonFile' },
-    { directory == '.' and '' or directory .. '/', 'TelescopeHarpoonDirectory' },
+    { vim.fn.fnamemodify(relative, ':t'), 'TelescopePickerFile' },
+    { directory == '.' and '' or directory .. '/', 'TelescopePickerDirectory' },
   }
 end
 

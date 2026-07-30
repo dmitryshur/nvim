@@ -5,12 +5,9 @@
 -- matched line with its original indentation, so a deeply nested match starts far
 -- to the right of everything around it. Three aligned columns instead:
 --
---   42:8    const holdings = usePortfolio()          Portfolio.tsx
---   118:3   export function formatHoldings(x)         utils.ts
---   204:12  <PortfolioTable holdings={holdings} on…   ActivePortfolioPageHeader.tsx
---
--- The filename is last so that it is the one thing never shortened; see
--- TEXT_SHARE below.
+--   Portfolio.tsx         42:8    const holdings = usePortfolio()
+--   utils.ts             118:3    export function formatHoldings(x)
+--   PortfolioHeader.tsx  204:12   <PortfolioTable holdings={holdings} onSo…
 --
 -- The text is trimmed for the display only. `lnum` and `col` stay exactly as
 -- ripgrep reported them so the jump still lands on the match -- which is why the
@@ -20,59 +17,40 @@
 -- Only the filename is shown, no directory: the preview pane names the file, and
 -- the width is better spent on the matched code.
 
+local columns = require 'core.picker_columns'
+
 local SEPARATOR = '  '
 local POSITION_WIDTH = 7
 
--- The matched line is the only text column given a width, which makes it the only
--- one the displayer truncates. The filename is last with no width at all, so it is
--- neither padded nor cut: a long name prints in full and, at worst, runs past the
--- edge of the results window.
---
--- That is also why the code column takes a *share* rather than the leftovers --
--- the remainder is what leaves room for the filename to be printed whole.
-local TEXT_MIN, TEXT_SHARE = 20, 0.55
+-- Filename leads, so the eye runs down a single column of names. It is generous
+-- on purpose -- the matched line is what should give way when the row runs out of
+-- room -- but it is a fixed width, so a name longer than the column still gets
+-- cut: alignment means every row shares one width, and some cap has to exist.
+local filename_width = columns.share(0.35, 16, 40)
 
-local DEFAULT_LINKS = {
-  TelescopeGrepFile = 'Directory',
-  TelescopeGrepPosition = 'Number',
-  TelescopeGrepText = 'Identifier',
+local build_displayer = columns.displayer {
+  separator = SEPARATOR,
+  links = {
+    TelescopePickerFile = 'Directory',
+    TelescopePickerPosition = 'Number',
+    TelescopePickerText = 'Identifier',
+  },
+  items = {
+    { width = filename_width },
+    { width = POSITION_WIDTH },
+    -- Last, so the code takes whatever is left and its padding is invisible
+    -- trailing whitespace.
+    { width = columns.remaining({ filename_width, POSITION_WIDTH }, #SEPARATOR * 2, 10) },
+  },
 }
-
-local function text_width(_, max_columns)
-  return math.max(TEXT_MIN, math.floor(max_columns * TEXT_SHARE))
-end
-
-local links_applied = false
-
--- Built per row: telescope's displayer resolves each column width once and keeps
--- it, so a shared instance would go on using the width it measured in the first
--- picker it rendered.
-local function build_displayer()
-  if not links_applied then
-    for group, target in pairs(DEFAULT_LINKS) do
-      vim.api.nvim_set_hl(0, group, { link = target, default = true })
-    end
-    links_applied = true
-  end
-
-  return require('telescope.pickers.entry_display').create {
-    separator = SEPARATOR,
-    items = {
-      { width = POSITION_WIDTH },
-      { width = text_width },
-      -- No width: never padded, never truncated.
-      { remaining = true },
-    },
-  }
-end
 
 local function make_display(entry)
   return build_displayer() {
+    { vim.fn.fnamemodify(entry.filename, ':t'), 'TelescopePickerFile' },
     -- Defaulted: a nil here would throw inside the render loop, which telescope
     -- reports as a bare "Finder failed" with no usable context.
-    { (entry.lnum or 0) .. ':' .. (entry.col or 0), 'TelescopeGrepPosition' },
-    { vim.trim(entry.text or ''), 'TelescopeGrepText' },
-    { vim.fn.fnamemodify(entry.filename, ':t'), 'TelescopeGrepFile' },
+    { (entry.lnum or 0) .. ':' .. (entry.col or 0), 'TelescopePickerPosition' },
+    { vim.trim(entry.text or ''), 'TelescopePickerText' },
   }
 end
 

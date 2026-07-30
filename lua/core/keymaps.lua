@@ -81,6 +81,11 @@ end, { desc = 'Telescope live grep (resumes last)' })
 vim.keymap.set('n', '<tab>', function() require('telescope.builtin').buffers() end, { desc = 'Telescope buffers' })
 vim.keymap.set('n', '<leader>r', function() require('telescope.builtin').resume() end, { desc = 'Telescope resume' })
 
+-- What is this key bound to: every active mapping, with its description and the
+-- plugin bindings your config never declared. `<leader>?` because that is the
+-- question it answers.
+vim.keymap.set('n', '<leader>?', function() require('telescope.builtin').keymaps() end, { desc = 'Telescope keymaps' })
+
 vim.keymap.set('n', '<leader>gg', ':Neogit<CR>', { desc = 'Open Neogit' })
 vim.keymap.set('n', '<leader>gs', function() require('telescope.builtin').git_branches() end, { desc = 'Switch git branch' })
 

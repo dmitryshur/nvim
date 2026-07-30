@@ -38,6 +38,9 @@ return {
             buffers = {
               sort_mru = true,
               ignore_current_buffer = true,
+              -- Filename / last cursor line / directory, matching the reference
+              -- picker, instead of the stock bufnr + status-flags + path:lnum.
+              entry_maker = require("core.buffer_entry").entry_maker,
             },
             -- `<leader><leader>` live grep. Same problem as the references
             -- picker: the stock vimgrep entry maker concatenates

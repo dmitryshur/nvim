@@ -140,6 +140,14 @@ return {
           map('gd', '<cmd>Telescope lsp_definitions<CR>', '[G]oto [D]efinition')
           map('gr', smart_references, '[G]oto [R]eferences')
           map('gI', '<cmd>Telescope lsp_implementations<CR>', '[G]oto [I]mplementation')
+          -- Finding a symbol rather than following one. Buffer-local like the rest
+          -- of these because both need a client attached to answer.
+          --
+          -- `gs` shadows the built-in "goto sleep" (:sleep for N seconds), which is
+          -- not something anyone reaches for by accident. `gS` has no built-in
+          -- meaning at all.
+          map('gs', '<cmd>Telescope lsp_document_symbols<CR>', '[G]oto [S]ymbol in file')
+          map('gS', '<cmd>Telescope lsp_dynamic_workspace_symbols<CR>', '[G]oto [S]ymbol in project')
           map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
           map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction', { 'n', 'x' })
 

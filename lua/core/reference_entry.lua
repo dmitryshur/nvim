@@ -23,9 +23,10 @@
 -- The line text is still in `ordinal`, so it stays fuzzy-searchable: you can
 -- type a fragment of a line to narrow the list without having to look at it.
 --
--- The displayer is built per row rather than at file scope: telescope resolves
--- column widths from the live picker's results window, so `create` is only
--- meaningful once a picker exists.
+-- Column plumbing (widths, the displayer, the fallback links) is shared with the
+-- other custom pickers; see core.picker_columns.
+
+local columns = require 'core.picker_columns'
 
 local SEPARATOR = '  '
 
@@ -34,69 +35,34 @@ local SEPARATOR = '  '
 local POSITION_WIDTH = 7
 
 -- Filename is the column that has to be a stable width -- it's what the eye runs
--- down -- so it gets a share of the window, clamped to stay sane on a narrow
--- results pane and to stop growing once it's wider than any real name.
-local FILENAME_MIN, FILENAME_MAX, FILENAME_SHARE = 14, 30, 0.32
+-- down. The directory takes everything left over and sits last, so its padding is
+-- trailing whitespace rather than a visible gap.
+local filename_width = columns.share(0.32, 14, 30)
 
-local function filename_width(_, max_columns)
-  return math.max(FILENAME_MIN, math.min(FILENAME_MAX, math.floor(max_columns * FILENAME_SHARE)))
-end
-
--- The directory takes everything left over. It's last on the row on purpose:
--- it's the variable-length column, so as the *last* one its padding is trailing
--- whitespace, which is invisible.
-local function directory_width(self, max_columns)
-  local used = filename_width(self, max_columns) + POSITION_WIDTH + (#SEPARATOR * 2)
-  return math.max(8, max_columns - used)
-end
-
-
--- Linked with `default = true`, so a colorscheme that defines these wins while
--- the picker still stays readable under one that has never heard of them. The
--- targets are all foreground-only groups: anything carrying a background would
--- paint its cell a different colour than the rest of the row.
-local DEFAULT_LINKS = {
-  TelescopeReferenceFile = 'Directory',
-  TelescopeReferenceDirectory = 'Comment',
-  TelescopeReferencePosition = 'Number',
+local build_displayer = columns.displayer {
+  separator = SEPARATOR,
+  links = {
+    TelescopePickerFile = 'Directory',
+    TelescopePickerDirectory = 'Comment',
+    TelescopePickerPosition = 'Number',
+  },
+  items = {
+    { width = filename_width },
+    { width = POSITION_WIDTH },
+    { width = columns.remaining({ filename_width, POSITION_WIDTH }, #SEPARATOR * 2) },
+  },
 }
 
-local links_applied = false
-
--- Built per row rather than cached: telescope's displayer resolves each column
--- width once and then keeps it for its own lifetime, so a shared instance would
--- go on using the width it measured in the first picker it ever rendered --
--- wrong as soon as the window is a different size.
-local function build_displayer()
-  if not links_applied then
-    for group, target in pairs(DEFAULT_LINKS) do
-      vim.api.nvim_set_hl(0, group, { link = target, default = true })
-    end
-    links_applied = true
-  end
-
-  return require('telescope.pickers.entry_display').create {
-    separator = SEPARATOR,
-    items = {
-      { width = filename_width },
-      { width = POSITION_WIDTH },
-      { width = directory_width },
-    },
-  }
-end
-
--- Both columns are handed to the displayer untruncated: it truncates to whatever
--- the resolved width turns out to be, which is the only place that knows it.
 local function make_display(entry)
   local relative = vim.fn.fnamemodify(entry.filename, ':.')
   local directory = vim.fn.fnamemodify(relative, ':h')
 
   return build_displayer() {
-    { vim.fn.fnamemodify(relative, ':t'), 'TelescopeReferenceFile' },
+    { vim.fn.fnamemodify(relative, ':t'), 'TelescopePickerFile' },
     -- Defaulted: a nil here would throw inside the render loop, which telescope
     -- reports as a bare "Finder failed" with no usable context.
-    { (entry.lnum or 0) .. ':' .. (entry.col or 0), 'TelescopeReferencePosition' },
-    { directory == '.' and '' or directory .. '/', 'TelescopeReferenceDirectory' },
+    { (entry.lnum or 0) .. ':' .. (entry.col or 0), 'TelescopePickerPosition' },
+    { directory == '.' and '' or directory .. '/', 'TelescopePickerDirectory' },
   }
 end
 

@@ -67,25 +67,16 @@ return {
   TelescopeResultsMethod = { fg = c.func },
   TelescopeResultsNumber = { fg = c.number },
   TelescopeResultsComment = { fg = c.comment },
-  -- Columns of the `gr` references picker (lua/core/reference_entry.lua). The
+  -- Columns shared by the custom pickers -- references, live grep, harpoon and
+  -- buffers (lua/core/picker_columns.lua and the entry makers beside it). The
   -- filename carries the colour, the directory recedes into comment grey behind
-  -- it, and the position gets its own hue so the numbers don't read as part of
-  -- the path. Foreground only -- a background would tint the cell differently to
-  -- the rest of the row.
-  TelescopeReferenceFile = { fg = c.link_text },
-  TelescopeReferenceDirectory = { fg = c.comment },
-  TelescopeReferencePosition = { fg = c.number },
-
-  -- ...and of the live grep picker (lua/core/grep_entry.lua). Same three-column
-  -- idea, with the matched code where the directory sits in the reference rows.
-  TelescopeGrepFile = { fg = c.link_text },
-  TelescopeGrepPosition = { fg = c.number },
-  TelescopeGrepText = { fg = c.fg },
-
-  -- ...and of the harpoon list (lua/core/harpoon.lua), which is the same
-  -- filename-then-dimmed-directory pair as the reference rows, minus the position.
-  TelescopeHarpoonFile = { fg = c.link_text },
-  TelescopeHarpoonDirectory = { fg = c.comment },
+  -- it, and the position gets its own hue so numbers don't read as part of the
+  -- path. Foreground only -- a background would tint the cell differently to the
+  -- rest of the row.
+  TelescopePickerFile = { fg = c.link_text },
+  TelescopePickerDirectory = { fg = c.comment },
+  TelescopePickerPosition = { fg = c.number },
+  TelescopePickerText = { fg = c.fg },
 
   TelescopeResultsDiffAdd = { fg = c.git_add },
   TelescopeResultsDiffChange = { fg = c.git_change },
