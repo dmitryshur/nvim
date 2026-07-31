@@ -106,6 +106,9 @@ vim.keymap.set('n', '<leader>gd', toggle_diffview 'DiffviewOpen', { desc = 'Togg
 vim.keymap.set('n', '<leader>gh', toggle_diffview 'DiffviewFileHistory %', { desc = 'Toggle git history for current file' })
 vim.keymap.set('n', '<leader>gb', ':Gitsigns blame<CR>', { desc = 'Git blame file' })
 vim.keymap.set('n', '<leader>gr', function() require('core.git_file_diff').pick() end, { desc = 'Diff current file between commits' })
+-- The repo-wide sibling of <leader>gr: pick branches instead of commits, and get
+-- every changed file rather than just this one. Reviewing a pull request locally.
+vim.keymap.set('n', '<leader>gf', function() require('core.git_branch_diff').pick() end, { desc = 'Diff all files between branches' })
 
 -- Manual format. In visual mode conform narrows to the selected range.
 -- `lsp_format = 'fallback'` mirrors conform's format_on_save so the manual and
