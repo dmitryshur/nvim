@@ -8,6 +8,29 @@ return {
   },
   cmd = 'Neotree',
   opts = {
+    -- `O` hands the entry under the cursor to the desktop's default application
+    -- (xdg-open here, via vim.ui.open) instead of opening it in a buffer -- for the
+    -- things Neovim can't render: images, PDFs, videos. Regular `<cr>` is untouched.
+    --
+    -- Defined at the top level so it applies to every source, not just filesystem.
+    commands = {
+      system_open = function(state)
+        local node = state.tree:get_node()
+        if not node then return end
+
+        -- vim.ui.open returns the spawned handle plus an error string; it only
+        -- reports failure to *launch* the opener, not what the opener then does.
+        local _, err = vim.ui.open(node.path)
+        if err then vim.notify(err, vim.log.levels.ERROR, { title = 'Neo-tree' }) end
+      end,
+    },
+    window = {
+      -- Merged with neo-tree's defaults (setup/init.lua deep-extends), so this adds
+      -- `O` without displacing <cr>, S, s, t and the rest.
+      mappings = {
+        ['O'] = 'system_open',
+      },
+    },
     filesystem = {
       -- Without this, nothing watches the filesystem: `enable_refresh_on_write`
       -- only fires when *Neovim* writes a file, so anything that changes files
