@@ -8,7 +8,38 @@ for _, lhs in ipairs { 'grn', 'grr', 'gri', 'gra', 'grt', 'grx' } do
 end
 pcall(vim.keymap.del, 'x', 'gra')
 
-vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+-- Two separate lists, deliberately kept apart. Diagnostics go to the *location*
+-- list, which is per-window and driven by `:lnext` / `:lopen`. The quickfix list
+-- is global, and telescope's <C-q> is what fills it -- so keeping diagnostics out
+-- of it means a picker's results aren't clobbered every time you list diagnostics.
+--
+-- Both toggle explicitly. `vim.diagnostic.setloclist` looks like it toggles on its
+-- own, but only by accident: it opens with `:lwindow` and leaves the cursor in the
+-- new window, so a second press runs against the location window itself, finds no
+-- diagnostics there, and `:lwindow` closes an empty list. Press it from the code
+-- window instead and it stays open. `getloclist`/`getqflist` with `winid = 0`
+-- report the window showing each list, or 0 when it isn't open.
+local toggle_loclist = function()
+  if vim.fn.getloclist(0, { winid = 0 }).winid ~= 0 then
+    vim.cmd.lclose()
+  else
+    -- Silently does nothing when the buffer is clean -- `:lwindow` won't open an
+    -- empty list, which is the behaviour we want anyway.
+    vim.diagnostic.setloclist()
+  end
+end
+
+local toggle_qflist = function()
+  if vim.fn.getqflist({ winid = 0 }).winid ~= 0 then
+    vim.cmd.cclose()
+  else
+    vim.cmd.copen()
+  end
+end
+
+-- Neither is a prefix for anything else, so neither waits for timeoutlen.
+vim.keymap.set('n', '<leader>q', toggle_qflist, { desc = 'Toggle [Q]uickfix list' })
+vim.keymap.set('n', '<leader>d', toggle_loclist, { desc = 'Toggle [D]iagnostics location list' })
 
 -- Diagnostics are quiet by default (signs and underline only -- see core.options).
 -- This expands the whole buffer to full virtual lines for when you're actually
@@ -106,9 +137,16 @@ vim.keymap.set('n', '<leader>gd', toggle_diffview 'DiffviewOpen', { desc = 'Togg
 vim.keymap.set('n', '<leader>gh', toggle_diffview 'DiffviewFileHistory %', { desc = 'Toggle git history for current file' })
 vim.keymap.set('n', '<leader>gb', ':Gitsigns blame<CR>', { desc = 'Git blame file' })
 vim.keymap.set('n', '<leader>gr', function() require('core.git_file_diff').pick() end, { desc = 'Diff current file between commits' })
--- The repo-wide sibling of <leader>gr: pick branches instead of commits, and get
--- every changed file rather than just this one. Reviewing a pull request locally.
-vim.keymap.set('n', '<leader>gf', function() require('core.git_branch_diff').pick() end, { desc = 'Diff all files between branches' })
+-- The repo-wide sibling of <leader>gr, and capitalised for exactly that reason:
+-- pick branches instead of commits, and get every changed file rather than just
+-- this one. Reviewing a pull request locally.
+vim.keymap.set('n', '<leader>gR', function() require('core.git_branch_diff').pick() end, { desc = 'Diff all files between branches' })
+
+-- Both run async and report through vim.notify. Fetch prunes, so branches deleted
+-- upstream stop showing up in the <leader>gR picker; pull reloads changed buffers
+-- afterwards. See core.git_remote.
+vim.keymap.set('n', '<leader>gf', function() require('core.git_remote').fetch() end, { desc = 'Git fetch (prune)' })
+vim.keymap.set('n', '<leader>gp', function() require('core.git_remote').pull() end, { desc = 'Git pull' })
 
 -- Manual format. In visual mode conform narrows to the selected range.
 -- `lsp_format = 'fallback'` mirrors conform's format_on_save so the manual and
@@ -152,3 +190,6 @@ vim.keymap.set('n', '<leader>sp', function() require('persistence').select() end
 -- Escape hatch: after a throwaway detour (opening one unrelated file, a big
 -- refactor you abandoned) this leaves the saved session as it was on disk.
 vim.keymap.set('n', '<leader>sd', function() require('persistence').stop() end, { desc = "Don't save the session on exit" })
+-- The quickfix list isn't part of a session -- nothing in Neovim persists one --
+-- so core.quickfix_persist saves it separately, on the same directory key.
+vim.keymap.set('n', '<leader>sq', function() require('core.quickfix_persist').restore() end, { desc = 'Restore saved quickfix list' })
