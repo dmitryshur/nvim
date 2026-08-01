@@ -133,9 +133,23 @@ local toggle_diffview = function(open_cmd)
   end
 end
 
+-- `Gitsigns blame` opens a scroll-bound split and offers no command to close it
+-- again, so closing meant `:q` from whichever side you were on. The split's buffer
+-- carries filetype `gitsigns-blame`, which is enough to find it -- searching the
+-- tabpage rather than tracking a window id, so the key still closes a blame split
+-- that was opened before this Neovim knew about it.
+local toggle_blame = function()
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if vim.bo[vim.api.nvim_win_get_buf(win)].filetype == 'gitsigns-blame' then
+      return vim.api.nvim_win_close(win, true)
+    end
+  end
+  vim.cmd 'Gitsigns blame'
+end
+
 vim.keymap.set('n', '<leader>gd', toggle_diffview 'DiffviewOpen', { desc = 'Toggle git diff view' })
 vim.keymap.set('n', '<leader>gh', toggle_diffview 'DiffviewFileHistory %', { desc = 'Toggle git history for current file' })
-vim.keymap.set('n', '<leader>gb', ':Gitsigns blame<CR>', { desc = 'Git blame file' })
+vim.keymap.set('n', '<leader>gb', toggle_blame, { desc = 'Toggle git blame' })
 vim.keymap.set('n', '<leader>gr', function() require('core.git_file_diff').pick() end, { desc = 'Diff current file between commits' })
 -- The repo-wide sibling of <leader>gr, and capitalised for exactly that reason:
 -- pick branches instead of commits, and get every changed file rather than just
