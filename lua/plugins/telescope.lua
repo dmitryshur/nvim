@@ -24,6 +24,15 @@ return {
             -- that the grep and reference rows show only a filename -- without it
             -- there is nowhere the directory appears at all.
             dynamic_preview_title = true,
+            -- Prompt on top with the best match directly under it, filling
+            -- downward -- the fzf arrangement. Both settings are needed: telescope
+            -- defaults to the prompt at the bottom *and* to filling the results
+            -- window bottom-up, so changing only one leaves the best match at the
+            -- far end of the list from the prompt. prompt_position sits directly
+            -- under layout_config rather than inside `horizontal` so it survives a
+            -- change of layout_strategy.
+            sorting_strategy = "ascending",
+            layout_config = { prompt_position = "top" },
             cache_picker = { num_pickers = 10 }, -- keep recent pickers resumable, not just the last one
             mappings = {
               i = {
