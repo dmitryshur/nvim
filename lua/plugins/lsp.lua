@@ -22,23 +22,6 @@ return {
       { 'j-hui/fidget.nvim', opts = {} },
     },
     config = function()
-      -- `gr` on the same symbol reopens the previous references picker (query,
-      -- selection and all) instead of starting a fresh search every time.
-      local last_references_word = nil
-      local smart_references = function()
-        local word = vim.fn.expand '<cword>'
-        if word == last_references_word then
-          local cached = require('telescope.state').get_global_key 'cached_pickers' or {}
-          for index, picker in ipairs(cached) do
-            if picker.prompt_title == 'LSP References' then
-              return require('telescope.builtin').resume { cache_index = index }
-            end
-          end
-        end
-        last_references_word = word
-        require('telescope.builtin').lsp_references()
-      end
-
       -- eslint and oxlint advertise `diagnosticProvider`, so Neovim pulls
       -- diagnostics on every didChange -- i.e. every ~150ms of typing. Worse,
       -- vim.diagnostic.show() hides the current extmarks *before* it consults
@@ -90,8 +73,25 @@ return {
       -- didOpen/didChange. tsgo relies entirely on the client to tell it a file
       -- changed, and Neovim doesn't by default, so an unopened dependency goes stale
       -- and reports errors `tsc` never sees.
+      -- How long a server gets to honour `shutdown` before it is killed. Measured
+      -- rather than picked: lua_ls never exits politely at all -- `is_stopped()`
+      -- flips true within a millisecond but the client sits in the registry
+      -- indefinitely -- and the forced kill then completes in tens of
+      -- milliseconds. The old 3000 was three seconds of waiting for something
+      -- that does not happen. This is a grace period for well-behaved servers,
+      -- not a deadline anything is expected to use.
+      local POLITE_EXIT_MS = 300
+      local FORCED_EXIT_MS = 2000
+      local POLL_MS = 25
+
+      -- What vim.lsp.enable() itself uses to attach pre-existing buffers. Unlike
+      -- :edit it leaves unsaved changes alone, and it covers every loaded buffer
+      -- rather than only the current one.
+      local reattach = function() vim.cmd.doautoall 'nvim.lsp.enable FileType' end
+
       vim.api.nvim_create_user_command('LspRestart', function()
         local stopped = vim.lsp.get_clients()
+        if #stopped == 0 then return reattach() end
 
         for _, client in ipairs(stopped) do
           client:stop()
@@ -104,23 +104,46 @@ return {
           return true
         end
 
-        -- stop() is async, and the attach path skips a buffer whose config is
-        -- already running, so re-attaching too early silently does nothing. Ask
-        -- politely first -- a forced kill exits non-zero, which makes Neovim warn
-        -- on every restart -- then force whatever ignored the shutdown, since a
-        -- wedged server is half the reason to reach for this command.
-        if not vim.wait(3000, all_exited, 50) then
-          for _, client in ipairs(stopped) do
-            if vim.lsp.get_client_by_id(client.id) then client:stop(true) end
-          end
+        -- Polled on a uv timer rather than through vim.wait. vim.wait spins the
+        -- event loop but refuses input for its whole duration, so waiting on the
+        -- servers froze the editor; this returns immediately and finishes in the
+        -- background. stop() is async and the attach path skips a buffer whose
+        -- config is already running, so the re-attach still has to wait for the
+        -- old clients to actually go -- it just no longer does that in the
+        -- foreground.
+        local timer = vim.uv.new_timer()
+        local elapsed, forced = 0, false
 
-          vim.wait(2000, all_exited, 50)
+        local finish = function(warning)
+          timer:stop()
+          timer:close()
+          reattach()
+          if warning then vim.notify(warning, vim.log.levels.WARN, { title = 'LspRestart' }) end
         end
 
-        -- What vim.lsp.enable() itself uses to attach pre-existing buffers. Unlike
-        -- :edit it leaves unsaved changes alone, and it covers every loaded buffer
-        -- rather than only the current one.
-        vim.cmd.doautoall 'nvim.lsp.enable FileType'
+        timer:start(
+          POLL_MS,
+          POLL_MS,
+          vim.schedule_wrap(function()
+            elapsed = elapsed + POLL_MS
+
+            if all_exited() then return finish() end
+
+            -- A forced kill exits non-zero, which makes Neovim warn, so it is
+            -- worth asking politely first -- but only briefly, since a wedged
+            -- server is half the reason to reach for this command.
+            if not forced and elapsed >= POLITE_EXIT_MS then
+              forced = true
+              for _, client in ipairs(stopped) do
+                if vim.lsp.get_client_by_id(client.id) then client:stop(true) end
+              end
+            end
+
+            if elapsed >= POLITE_EXIT_MS + FORCED_EXIT_MS then
+              finish 'Some clients ignored both shutdown and kill; re-attached anyway'
+            end
+          end)
+        )
       end, { desc = 'Restart all LSP clients so they re-read files from disk' })
 
       -- Deliberately global rather than buffer-local like the LspAttach maps below:
@@ -138,7 +161,10 @@ return {
           end
 
           map('gd', '<cmd>Telescope lsp_definitions<CR>', '[G]oto [D]efinition')
-          map('gr', smart_references, '[G]oto [R]eferences')
+          -- Always a fresh textDocument/references request. <leader>r (telescope
+          -- resume) is the deliberate way back to the previous picker, so gr does
+          -- not need to second-guess whether you wanted the old results.
+          map('gr', '<cmd>Telescope lsp_references<CR>', '[G]oto [R]eferences')
           map('gI', '<cmd>Telescope lsp_implementations<CR>', '[G]oto [I]mplementation')
           -- Finding a symbol rather than following one. Buffer-local like the rest
           -- of these because both need a client attached to answer.
@@ -148,7 +174,6 @@ return {
           -- meaning at all.
           map('gs', '<cmd>Telescope lsp_document_symbols<CR>', '[G]oto [S]ymbol in file')
           map('gS', '<cmd>Telescope lsp_dynamic_workspace_symbols<CR>', '[G]oto [S]ymbol in project')
-          map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
           map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction', { 'n', 'x' })
 
           -- WARN: This is not Goto Definition, this is Goto Declaration.
