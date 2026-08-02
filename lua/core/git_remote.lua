@@ -17,14 +17,15 @@ local running = {}
 
 local function notify(message, level) vim.notify(message, level, { title = 'Git' }) end
 
-local function run(name, args, on_success)
+local function run(name, args, opts)
+  opts = opts or {}
   if running[name] then return notify(name .. ' already running', vim.log.levels.WARN) end
   running[name] = true
   notify(name .. '...', vim.log.levels.INFO)
 
   vim.system(
     vim.list_extend({ 'git' }, args),
-    { cwd = vim.uv.cwd(), text = true },
+    { cwd = opts.cwd or vim.uv.cwd(), text = true },
     vim.schedule_wrap(function(result)
       running[name] = nil
 
@@ -45,7 +46,7 @@ local function run(name, args, on_success)
 
       local message = stdout ~= '' and stdout or stderr
       notify(message ~= '' and message or (name .. ': nothing new'), vim.log.levels.INFO)
-      if on_success then on_success() end
+      if opts.on_success then opts.on_success() end
     end)
   )
 end
@@ -55,17 +56,56 @@ end
 -- refs/remotes directly and can't tell a stale ref from a live one.
 function M.fetch() run('Fetch', { 'fetch', '--prune' }) end
 
+-- Both pull and merge write to the working tree, so both need this afterwards.
+local function reload_working_tree()
+  -- For immediacy, not correctness: the check-external-file-changes autocmd in
+  -- core.options would catch this on the next CursorHold anyway, but that is
+  -- `updatetime` away (4s) and only once you stop typing. Same reason telescope
+  -- runs checktime after its own `git checkout`.
+  vim.cmd 'checktime'
+  -- Likewise redundant-but-immediate: gitsigns keeps a libuv watcher on the git
+  -- directory (`watch_gitdir` defaults to enabled) and would notice on its own.
+  pcall(function() require('gitsigns').refresh() end)
+end
+
+-- `origin/feature/foo` has to become `origin` + `feature/foo`, and splitting on
+-- the first slash only works because branch names contain slashes far more often
+-- than remote names do. Matching against the actual remotes is exact.
+local function split_remote_ref(ref, remotes)
+  for _, remote in ipairs(remotes) do
+    local branch = ref:match('^' .. vim.pesc(remote) .. '/(.+)$')
+    if branch then return remote, branch end
+  end
+end
+
+-- `--no-edit` on both: a pull or merge that produces a merge commit would
+-- otherwise try to open $EDITOR for its message, and vim.system gives it no
+-- terminal to open one in.
 function M.pull()
-  run('Pull', { 'pull' }, function()
-    -- For immediacy, not correctness: the check-external-file-changes autocmd in
-    -- core.options would catch this on the next CursorHold anyway, but that is
-    -- `updatetime` away (4s) and only once you stop typing. Same reason telescope
-    -- runs checktime after its own `git checkout`.
-    vim.cmd 'checktime'
-    -- Likewise redundant-but-immediate: gitsigns keeps a libuv watcher on the git
-    -- directory (`watch_gitdir` defaults to enabled) and would notice on its own.
-    pcall(function() require('gitsigns').refresh() end)
-  end)
+  require('core.git_branches').pick {
+    title = 'Pull branch',
+    remote_only = true, -- there is nothing to pull from a local branch
+    on_select = function(selected, _, root)
+      if not selected then return notify('No branch selected', vim.log.levels.WARN) end
+
+      local remote, branch = split_remote_ref(selected, require('core.git_branches').remotes(root))
+      if not remote then return notify('Not a remote branch: ' .. selected, vim.log.levels.WARN) end
+
+      run('Pull', { 'pull', '--no-edit', remote, branch }, { cwd = root, on_success = reload_working_tree })
+    end,
+  }
+end
+
+function M.merge()
+  require('core.git_branches').pick {
+    -- Local and remote both listed: `git merge origin/main` after a fetch is as
+    -- common as merging a branch you have checked out.
+    title = 'Merge branch into HEAD',
+    on_select = function(selected, _, root)
+      if not selected then return notify('No branch selected', vim.log.levels.WARN) end
+      run('Merge', { 'merge', '--no-edit', selected }, { cwd = root, on_success = reload_working_tree })
+    end,
+  }
 end
 
 return M
