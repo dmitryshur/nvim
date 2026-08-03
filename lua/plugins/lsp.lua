@@ -325,7 +325,26 @@ return {
       -- debounce is per buffer and takes the minimum across attached clients,
       -- so raising it for eslint alone would change nothing while tsgo and
       -- tailwindcss sit at the default.
-      vim.lsp.config('*', { flags = { debounce_text_changes = 500 } })
+      -- Neovim's own default is `dynamicRegistration = false`, which tells every
+      -- server "I cannot watch files for you". Servers then never register any
+      -- watchers, Neovim never sends workspace/didChangeWatchedFiles, and a file
+      -- changed on disk by anything other than Neovim is invisible to them --
+      -- which is the whole reason :LspRestart gets reached for so often. Buffers
+      -- Neovim has open recover by themselves (checktime reloads them and the
+      -- reload sends didChange); it is the files that aren't open that go stale.
+      --
+      -- Turning it on is affordable here: with inotifywait installed Neovim uses
+      -- it instead of polling, it excludes node_modules and .git/objects the same
+      -- way VS Code does, and this tree is ~7k watchable directories against an
+      -- inotify limit of ~530k.
+      vim.lsp.config('*', {
+        flags = { debounce_text_changes = 500 },
+        capabilities = {
+          workspace = {
+            didChangeWatchedFiles = { dynamicRegistration = true },
+          },
+        },
+      })
 
       for name, server in pairs(servers) do
         vim.lsp.config(name, server)

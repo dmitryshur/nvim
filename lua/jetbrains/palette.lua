@@ -63,6 +63,14 @@ return {
   git_delete_bg = '#2b2322', -- diff_hunk.deleted
   git_word_add = '#294436', -- version_control.word_added
   git_word_delete = '#45302b', -- version_control.word_deleted
+  -- DERIVED, not from the Zed theme -- the only two colours in this file that
+  -- aren't. Zed has no diff_hunk.modified background because it renders a change
+  -- as separate add and delete hunks; vim's side-by-side diff has a third state,
+  -- DiffChange, shown on *both* panes at once. Painting it with git_add_bg made
+  -- the old text on the left read as an addition. Tinted from git_change
+  -- (#375fad, version_control.modified) at the same weight as the pair above.
+  git_change_bg = '#1f2530',
+  git_word_change = '#26344a',
   created = '#73bd7a',
   deleted = '#f75464',
   modified = '#70aeff',

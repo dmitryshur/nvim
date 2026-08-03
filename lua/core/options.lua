@@ -42,6 +42,14 @@ option.swapfile = false
 vim.o.undofile = true
 vim.opt.autoread = true
 
+-- The rows of dashes in a diff are filler lines: where one pane has content the
+-- other doesn't, vim pads the shorter side to keep them aligned and fills those
+-- rows with `fillchars` `diff`, which defaults to '-'. A blank leaves the gap
+-- visible through its background alone (DiffviewDiffDeleteDim in Diffview) without
+-- drawing anything that reads like text. `:append` rather than assignment so the
+-- rest of fillchars keeps Neovim's defaults.
+vim.opt.fillchars:append { diff = ' ' }
+
 -- Highlight when yanking (copying) text
 -- `:Ruler` shows or hides the column ruler. A command rather than a keymap because
 -- it gets used rarely enough not to be worth a key, and nothing sets `colorcolumn`

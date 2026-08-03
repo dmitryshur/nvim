@@ -93,10 +93,15 @@ return {
 
   ------------------------------------------------------------------- diff --
   -- Backgrounds come from editor.diff_hunk.*; DiffText uses the word-level pair.
+  --
+  -- DiffChange is the third state: a line present on both sides but altered. Vim
+  -- paints it on *both* panes with one group, so it must not be the add colour --
+  -- that made the pre-change text on the left look inserted. The derived
+  -- git_change_bg pair keeps green meaning "added" and nothing else.
   DiffAdd = { bg = c.git_add_bg },
   DiffDelete = { bg = c.git_delete_bg },
-  DiffChange = { bg = c.git_add_bg },
-  DiffText = { bg = c.git_word_add },
+  DiffChange = { bg = c.git_change_bg },
+  DiffText = { bg = c.git_word_change },
   diffAdded = { fg = c.git_add },
   diffRemoved = { fg = c.git_delete },
   diffChanged = { fg = c.git_change },
