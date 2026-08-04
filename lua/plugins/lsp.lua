@@ -239,16 +239,16 @@ return {
         -- One TypeScript server at a time: two would double every diagnostic and
         -- every completion entry.
         --
-        -- vtsls wraps VS Code's TypeScript service -- the mature Node tsserver
-        -- engine, and the same server Zed runs. Slower to typecheck than tsgo, but
-        -- feature-complete: tsgo returns nothing for completions inside an
-        -- unfinished import clause (`import {Butt`), which is the gap that prompted
-        -- the switch.
+        -- tsgo is the native (Go) port, distributed as @typescript/native-preview,
+        -- and much faster to typecheck. The known cost: it returns nothing for
+        -- completions inside an unfinished import clause (`import {Butt`), where
+        -- vtsls -- VS Code's Node tsserver engine, and what Zed runs -- offers every
+        -- importable symbol. Type the bare name in the body instead and accept the
+        -- auto-import; tsgo handles that case fine.
         --
-        -- tsgo is the native (Go) port, distributed as @typescript/native-preview.
-        -- Swap the two lines below to go back to it.
-         vtsls = {},
-        -- tsgo = {},
+        -- Swap the two lines below to try vtsls again. It stays installed in Mason.
+         tsgo = {},
+        -- vtsls = {},
 
         -- NOTE: `settings.run = 'onSave'` has no effect here. Both linters
         -- advertise `diagnosticProvider`, so Neovim pulls diagnostics on every
