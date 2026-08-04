@@ -22,6 +22,17 @@ return {
       { 'j-hui/fidget.nvim', opts = {} },
     },
     config = function()
+      -- Neovim 0.12 renders textDocument/documentColor results as coloured
+      -- backgrounds and enables it by default, so tailwindcss-language-server
+      -- paints every colour-bearing class -- `text-black-35 dark:text-black-15`
+      -- and so on -- in the colour it resolves to. Informative in a stylesheet,
+      -- noise in a className list, where most of the string isn't a colour.
+      --
+      -- Off globally rather than per-filetype: tailwind is the only server here
+      -- with a colorProvider, so there is nothing else to preserve. `style` also
+      -- accepts 'foreground' or 'virtual' if a quieter form is ever wanted.
+      vim.lsp.document_color.enable(false)
+
       -- eslint and oxlint advertise `diagnosticProvider`, so Neovim pulls
       -- diagnostics on every didChange -- i.e. every ~150ms of typing. Worse,
       -- vim.diagnostic.show() hides the current extmarks *before* it consults
@@ -225,9 +236,19 @@ return {
          clangd = {},
         -- pyright = {},
          rust_analyzer = {},
-        -- tsgo is the native (Go) TypeScript language server, distributed as
-        -- @typescript/native-preview. Switch back to `ts_ls` if a feature is missing.
-         tsgo = {},
+        -- One TypeScript server at a time: two would double every diagnostic and
+        -- every completion entry.
+        --
+        -- vtsls wraps VS Code's TypeScript service -- the mature Node tsserver
+        -- engine, and the same server Zed runs. Slower to typecheck than tsgo, but
+        -- feature-complete: tsgo returns nothing for completions inside an
+        -- unfinished import clause (`import {Butt`), which is the gap that prompted
+        -- the switch.
+        --
+        -- tsgo is the native (Go) port, distributed as @typescript/native-preview.
+        -- Swap the two lines below to go back to it.
+         vtsls = {},
+        -- tsgo = {},
 
         -- NOTE: `settings.run = 'onSave'` has no effect here. Both linters
         -- advertise `diagnosticProvider`, so Neovim pulls diagnostics on every
