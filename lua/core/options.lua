@@ -42,6 +42,11 @@ option.swapfile = false
 vim.o.undofile = true
 vim.opt.autoread = true
 
+-- Keep similar lines aligned, but show each line as one changed unit rather than
+-- mixing character-level highlights into it. Histogram produces clearer hunks
+-- for source code than the default Myers algorithm.
+option.diffopt = 'internal,filler,closeoff,indent-heuristic,algorithm:histogram,inline:none,linematch:40'
+
 -- The rows of dashes in a diff are filler lines: where one pane has content the
 -- other doesn't, vim pads the shorter side to keep them aligned and fills those
 -- rows with `fillchars` `diff`, which defaults to '-'. A blank leaves the gap
