@@ -111,6 +111,7 @@ vim.keymap.set('n', '<leader><leader>', function()
 end, { desc = 'Telescope live grep (resumes last)' })
 vim.keymap.set('n', '<tab>', function() require('telescope.builtin').buffers() end, { desc = 'Telescope buffers' })
 vim.keymap.set('n', '<leader>r', function() require('telescope.builtin').resume() end, { desc = 'Telescope resume' })
+vim.keymap.set('n', '<leader>t', '<cmd>Telescope telescope-tabs list_tabs<CR>', { desc = 'Telescope tabs' })
 
 -- What is this key bound to: every active mapping, with its description and the
 -- plugin bindings your config never declared. `<leader>?` because that is the

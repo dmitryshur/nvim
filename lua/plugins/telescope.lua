@@ -5,6 +5,7 @@ return {
         'nvim-lua/plenary.nvim',
         -- optional but recommended
         { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' },
+        'LukasPietzschmann/telescope-tabs',
     },
     config = function()
         local telescope = require("telescope")
@@ -44,6 +45,28 @@ return {
             },
           },
           pickers = {
+            find_files = {
+              find_command = function(opts)
+                local cwd = opts.cwd or vim.uv.cwd()
+                local root = vim.fs.root(cwd, '.git') or cwd
+                local ignore_file = vim.fs.joinpath(root, '.vim', 'telescope-ignore')
+                local command = {
+                  "fd",
+                  "--type",
+                  "f",
+                  "--color",
+                  "never",
+                  "--hidden",
+                  "--exclude",
+                  ".git",
+                }
+
+                if vim.uv.fs_stat(ignore_file) then
+                  vim.list_extend(command, { "--no-ignore", "--ignore-file", ignore_file })
+                end
+                return command
+              end,
+            },
             buffers = {
               sort_mru = true,
               ignore_current_buffer = true,
@@ -75,5 +98,6 @@ return {
         -- bundled Lua `fzy` sorter. Loading it swaps in the native matcher and
         -- brings fzf's query syntax ('exact, ^prefix, suffix$, !negate).
         telescope.load_extension("fzf")
+        telescope.load_extension("telescope-tabs")
       end,
 }

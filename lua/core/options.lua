@@ -78,13 +78,20 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   callback = function() vim.hl.on_yank() end,
 })
 
+local function check_external_file_changes()
+  if vim.g.SessionLoad ~= 1 then vim.cmd 'checktime' end
+end
+
 vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter', 'CursorHold', 'TermClose' }, {
   desc = 'Check for externally changed files',
   group = vim.api.nvim_create_augroup('check-external-file-changes', { clear = true }),
-  callback = function()
-    if vim.g.SessionLoad ~= 1 then vim.cmd 'checktime' end
-  end,
+  callback = check_external_file_changes,
 })
+
+-- Focus and CursorHold events are not guaranteed while another process edits a
+-- file beside a focused Neovim. Polling timestamps keeps clean buffers and their
+-- LSP document state current even while actively navigating or typing.
+vim.fn.timer_start(1000, check_external_file_changes, { ['repeat'] = -1 })
 
 vim.diagnostic.config {
   update_in_insert = false,

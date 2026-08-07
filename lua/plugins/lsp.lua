@@ -43,23 +43,57 @@ return {
       -- between keystrokes. InsertLeave then pulls once, for real.
       local refresh_diagnostics = vim.lsp.diagnostic._refresh
       local gated_linters = { eslint = true, oxlint = true }
+      local force_diagnostic_pull = {}
+      local reload_hooks = {}
 
       -- `_refresh` is private. If a future Neovim drops it, skip the gating
       -- entirely rather than gate pulls we can no longer restart -- stale
       -- diagnostics forever is a worse failure than the churn we're fixing.
       if refresh_diagnostics then
+        local function attach_reload_hook(bufnr)
+          if reload_hooks[bufnr] then return end
+          reload_hooks[bufnr] = true
+
+          vim.api.nvim_buf_attach(bufnr, false, {
+            on_reload = function(_, reloaded_bufnr)
+              -- Neovim's pull-diagnostic handler also refreshes on reload, but
+              -- the insert-mode gate above intentionally rejects that request.
+              -- Allow one pull for the new on-disk contents without re-enabling
+              -- diagnostic churn for ordinary insert-mode changes.
+              if vim.fn.mode():sub(1, 1) ~= 'i' then return end
+
+              vim.schedule(function()
+                if not vim.api.nvim_buf_is_valid(reloaded_bufnr) then return end
+
+                force_diagnostic_pull[reloaded_bufnr] = true
+                for _, client in ipairs(vim.lsp.get_clients { bufnr = reloaded_bufnr, method = 'textDocument/diagnostic' }) do
+                  if gated_linters[client.name] then refresh_diagnostics(reloaded_bufnr, client.id) end
+                end
+                force_diagnostic_pull[reloaded_bufnr] = nil
+              end)
+            end,
+            on_detach = function(_, detached_bufnr)
+              force_diagnostic_pull[detached_bufnr] = nil
+              reload_hooks[detached_bufnr] = nil
+            end,
+          })
+        end
+
         vim.api.nvim_create_autocmd('LspAttach', {
           group = vim.api.nvim_create_augroup('lsp-gate-insert-mode-pulls', { clear = true }),
           callback = function(event)
             local client = vim.lsp.get_client_by_id(event.data.client_id)
-            if not client or not gated_linters[client.name] or client.insert_pull_gated then return end
+            if not client or not gated_linters[client.name] then return end
+
+            attach_reload_hook(event.buf)
+            if client.insert_pull_gated then return end
             client.insert_pull_gated = true -- one client serves many buffers; only wrap it once
 
             local request = client.request
             client.request = function(self, method, params, handler, bufnr)
               -- Neovim's pull loop ignores the return value, so claiming
               -- success keeps the skip from reading as a dead client.
-              if method == 'textDocument/diagnostic' and vim.fn.mode():sub(1, 1) == 'i' then return true, nil end
+              if method == 'textDocument/diagnostic' and vim.fn.mode():sub(1, 1) == 'i' and not force_diagnostic_pull[bufnr] then return true, nil end
               return request(self, method, params, handler, bufnr)
             end
           end,
@@ -218,7 +252,7 @@ return {
           end
 
           if client and client:supports_method('textDocument/inlayHint', event.buf) then
-            map('<leader>th', function() vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf }) end, '[T]oggle Inlay [H]ints')
+            map('<leader>lh', function() vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf }) end, '[L]sp Inlay [H]ints')
           end
         end,
       })
@@ -261,6 +295,7 @@ return {
         -- between the two, so eslint alone leaves gaps (e.g. react-hooks).
         -- Prefers the project-local node_modules/.bin/oxlint over the Mason one.
          oxlint = {
+          settings = { typeAware = false },
           -- Diffview's `diffview://...` buffers report filetype=typescript, so
           -- oxlint tries to start for them. Upstream's root_dir can't walk a
           -- pseudo-path: vim.fs.find falls back to the cwd and returns a
