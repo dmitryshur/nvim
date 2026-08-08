@@ -83,9 +83,61 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   callback = function() vim.hl.on_yank() end,
 })
 
-local function check_external_file_changes()
-  if vim.g.SessionLoad ~= 1 then vim.cmd 'checktime' end
+local file_signatures = {}
+
+local function file_signature(bufnr)
+  local name = vim.api.nvim_buf_get_name(bufnr)
+  if name == '' or name:find '://' then return end
+  local stat = vim.uv.fs_stat(name)
+  if not stat then return end
+
+  return table.concat({
+    stat.dev,
+    stat.ino,
+    stat.size,
+    stat.mtime.sec,
+    stat.mtime.nsec,
+    stat.ctime.sec,
+    stat.ctime.nsec,
+  }, ':')
 end
+
+local function remember_file(bufnr)
+  file_signatures[bufnr] = file_signature(bufnr)
+end
+
+local function check_external_file_changes()
+  if vim.g.SessionLoad == 1 then return end
+
+  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_loaded(bufnr) and vim.bo[bufnr].buftype == '' then
+      local current = file_signature(bufnr)
+      local previous = file_signatures[bufnr]
+
+      if current and previous and current ~= previous and not vim.bo[bufnr].modified then
+        file_signatures[bufnr] = current
+        vim.api.nvim_buf_call(bufnr, function() vim.cmd 'silent! edit!' end)
+        remember_file(bufnr)
+      elseif not previous then
+        file_signatures[bufnr] = current
+      end
+    end
+  end
+
+  vim.cmd 'checktime'
+end
+
+vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufWritePost', 'BufFilePost' }, {
+  desc = 'Remember file state for external change detection',
+  group = vim.api.nvim_create_augroup('remember-file-state', { clear = true }),
+  callback = function(event) remember_file(event.buf) end,
+})
+
+vim.api.nvim_create_autocmd({ 'BufDelete', 'BufWipeout' }, {
+  desc = 'Forget file state for deleted buffers',
+  group = vim.api.nvim_create_augroup('forget-file-state', { clear = true }),
+  callback = function(event) file_signatures[event.buf] = nil end,
+})
 
 vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter', 'CursorHold', 'TermClose' }, {
   desc = 'Check for externally changed files',
@@ -94,8 +146,8 @@ vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter', 'CursorHold', 'TermClos
 })
 
 -- Focus and CursorHold events are not guaranteed while another process edits a
--- file beside a focused Neovim. Polling timestamps keeps clean buffers and their
--- LSP document state current even while actively navigating or typing.
+-- file beside a focused Neovim. Include inode and ctime because Git can restore
+-- a same-sized file without producing an mtime change that :checktime notices.
 vim.fn.timer_start(1000, check_external_file_changes, { ['repeat'] = -1 })
 
 vim.diagnostic.config {
