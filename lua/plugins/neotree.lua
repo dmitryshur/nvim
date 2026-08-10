@@ -8,6 +8,17 @@ return {
   },
   cmd = 'Neotree',
   opts = {
+    default_component_configs = {
+      indent = {
+        indent_size = 1,
+      },
+      icon = {
+        folder_closed = '󰉋',
+        folder_open = '󰝰',
+        folder_empty = '󰉋',
+        folder_empty_open = '󰝰',
+      },
+    },
     -- `O` hands the entry under the cursor to the desktop's default application
     -- (xdg-open here, via vim.ui.open) instead of opening it in a buffer -- for the
     -- things Neovim can't render: images, PDFs, videos. Regular `<cr>` is untouched.

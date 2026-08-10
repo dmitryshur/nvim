@@ -10,7 +10,7 @@ return {
   NeoTreeCursorLine = { bg = c.bg_selected },
   NeoTreeRootName = { fg = c.fg_bright, bold = true },
   NeoTreeDirectoryName = { fg = c.fg_muted },
-  NeoTreeDirectoryIcon = { fg = c.tag },
+  NeoTreeDirectoryIcon = { fg = c.fg_dim },
   NeoTreeFileName = { fg = c.fg_muted },
   NeoTreeFileIcon = { fg = c.fg_muted },
   NeoTreeFileNameOpened = { fg = c.fg_bright },

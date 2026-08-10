@@ -42,10 +42,10 @@ option.swapfile = false
 vim.o.undofile = true
 vim.opt.autoread = true
 
--- Keep similar lines aligned, but show each line as one changed unit rather than
--- mixing character-level highlights into it. Histogram produces clearer hunks
--- for source code than the default Myers algorithm.
-option.diffopt = 'internal,filler,closeoff,indent-heuristic,algorithm:histogram,inline:none,linematch:40'
+-- Keep added and removed lines distinct, with enough surrounding context to
+-- understand each hunk. Histogram produces clearer source-code diffs than the
+-- default Myers algorithm.
+option.diffopt = 'internal,filler,closeoff,indent-heuristic,algorithm:histogram,inline:none,context:12'
 
 -- The rows of dashes in a diff are filler lines: where one pane has content the
 -- other doesn't, vim pads the shorter side to keep them aligned and fills those
@@ -109,12 +109,17 @@ end
 local function check_external_file_changes()
   if vim.g.SessionLoad == 1 then return end
 
+  local diagnostic_clients = {}
+
   for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
     if vim.api.nvim_buf_is_loaded(bufnr) and vim.bo[bufnr].buftype == '' then
       local current = file_signature(bufnr)
       local previous = file_signatures[bufnr]
 
       if current and previous and current ~= previous and not vim.bo[bufnr].modified then
+        for _, client in ipairs(vim.lsp.get_clients { bufnr = bufnr, method = 'textDocument/diagnostic' }) do
+          diagnostic_clients[client.id] = true
+        end
         file_signatures[bufnr] = current
         vim.api.nvim_buf_call(bufnr, function() vim.cmd 'silent! edit!' end)
         remember_file(bufnr)
@@ -125,6 +130,14 @@ local function check_external_file_changes()
   end
 
   vim.cmd 'checktime'
+
+  -- Reloading refreshes the changed document, but not diagnostics in files that depend on it.
+  local refresh_diagnostics = vim.lsp.handlers['workspace/diagnostic/refresh']
+  if refresh_diagnostics then
+    for client_id in pairs(diagnostic_clients) do
+      refresh_diagnostics(nil, nil, { client_id = client_id })
+    end
+  end
 end
 
 vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufWritePost', 'BufFilePost' }, {

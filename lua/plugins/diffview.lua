@@ -1,3 +1,23 @@
+local function set_changed_line_highlight(winid, highlight)
+  local changed_groups = {
+    DiffChange = true,
+    DiffText = true,
+    DiffTextAdd = true,
+  }
+  local winhighlight = {}
+
+  for entry in vim.gsplit(vim.wo[winid].winhighlight, ',', { plain = true, trimempty = true }) do
+    local group = entry:match '^([^:]+):'
+    if not changed_groups[group] then winhighlight[#winhighlight + 1] = entry end
+  end
+
+  for _, group in ipairs { 'DiffChange', 'DiffText', 'DiffTextAdd' } do
+    winhighlight[#winhighlight + 1] = group .. ':' .. highlight
+  end
+
+  vim.wo[winid].winhighlight = table.concat(winhighlight, ',')
+end
+
 return {
   'sindrets/diffview.nvim',
   cmd = { 'DiffviewOpen', 'DiffviewClose', 'DiffviewFileHistory' },
@@ -27,6 +47,22 @@ return {
     view = {
       default = { disable_diagnostics = true }, -- <leader>gd, <leader>gR
       file_history = { disable_diagnostics = true }, -- <leader>gh, <leader>gr
+    },
+    hooks = {
+      -- Wrapped lines can occupy different screen rows in each pane and make an
+      -- otherwise aligned diff look offset. This event also runs after layouts
+      -- change, so every window displaying a diff buffer stays unwrapped.
+      diff_buf_win_enter = function(_, winid, ctx)
+        vim.wo[winid].wrap = false
+
+        -- Neovim classifies paired old/new rows as a third state, DiffChange.
+        -- Render those as removals on the old side and additions on the new side,
+        -- matching two-action diff viewers while preserving neutral merge panes.
+        if ctx.layout_name:match '^diff2_' then
+          local highlight = ctx.symbol == 'a' and 'DiffviewDiffAddAsDelete' or ctx.symbol == 'b' and 'DiffviewDiffAdd'
+          if highlight then set_changed_line_highlight(winid, highlight) end
+        end
+      end,
     },
     -- `q` isn't bound by default, so quitting means `:q` per window. These
     -- keymaps are only active inside a Diffview tabpage, so `q` keeps its
