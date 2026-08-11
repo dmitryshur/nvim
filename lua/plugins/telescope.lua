@@ -57,6 +57,11 @@ return {
                   "--color",
                   "never",
                   "--hidden",
+                  -- Descend into symlinked directories. Without it a symlinked
+                  -- dir is one skipped entry, so nothing inside it is findable
+                  -- -- which is how a git worktree that links to shared dirs
+                  -- (logs/, .vim/) ends up with those trees missing entirely.
+                  "--follow",
                   "--exclude",
                   ".git",
                 }
@@ -80,6 +85,9 @@ return {
             -- arrives with its original indentation.
             live_grep = {
               entry_maker = require("core.grep_entry").entry_maker,
+              -- Same symlink blind spot as find_files: ripgrep skips symlinked
+              -- directories unless told to follow them.
+              additional_args = { "--follow" },
             },
             -- `gr` references. The stock quickfix entry maker crams
             -- path:lnum:col:text into one uncoloured string; this lays it out in
