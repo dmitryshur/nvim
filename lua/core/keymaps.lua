@@ -121,6 +121,8 @@ vim.keymap.set('n', '<leader>?', function() require('telescope.builtin').keymaps
 vim.keymap.set('n', '<leader>gg', ':Neogit<CR>', { desc = 'Open Neogit' })
 vim.keymap.set('n', '<leader>gs', function() require('telescope.builtin').git_branches() end, { desc = 'Switch git branch' })
 
+require('core.git_pull_request').setup()
+
 -- Diffview lives in its own tabpage, so `:q` only peels off one window at a
 -- time. DiffviewClose tears the whole tab down in one go; toggling through it
 -- means the same key that opened the view also closes it.

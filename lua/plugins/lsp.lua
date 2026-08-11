@@ -176,6 +176,16 @@ return {
           if client and client:supports_method('textDocument/inlayHint', event.buf) then
             map('<leader>lh', function() vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf }) end, '[L]sp Inlay [H]ints')
           end
+
+          local buffer_name = vim.api.nvim_buf_get_name(event.buf)
+          if
+            client
+            and client:supports_method('textDocument/inlineCompletion', event.buf)
+            and vim.bo[event.buf].buftype == ''
+            and not buffer_name:find('://', 1, true)
+          then
+            vim.lsp.inline_completion.enable(true, { bufnr = event.buf })
+          end
         end,
       })
 
@@ -190,6 +200,7 @@ return {
       ---@type table<string, vim.lsp.Config>
       local servers = {
          clangd = {},
+         copilot = {},
         -- pyright = {},
          rust_analyzer = {},
         -- One TypeScript server at a time: two would double every diagnostic and

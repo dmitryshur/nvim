@@ -37,9 +37,14 @@ return { -- Autocompletion
         -- See :h blink-cmp-config-keymap for defining your own keymap
         preset = 'enter',
 
-        -- Tab/S-Tab cycle the completion list; inside a snippet they jump
-        -- between placeholders instead.
-        ['<Tab>'] = { 'select_next', 'snippet_forward', 'fallback' },
+        -- Accept a visible native LSP inline completion first. Without one, keep
+        -- the existing Blink selection, snippet jump and normal Tab behavior.
+        ['<Tab>'] = {
+          function() return vim.lsp.inline_completion.get() end,
+          'select_next',
+          'snippet_forward',
+          'fallback',
+        },
         ['<S-Tab>'] = { 'select_prev', 'snippet_backward', 'fallback' },
       },
 
@@ -74,4 +79,3 @@ return { -- Autocompletion
       signature = { enabled = true },
     }
   }
-
