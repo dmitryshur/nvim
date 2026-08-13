@@ -9,9 +9,6 @@ return {
   cmd = 'Neotree',
   opts = {
     default_component_configs = {
-      indent = {
-        indent_size = 1,
-      },
       icon = {
         folder_closed = '󰉋',
         folder_open = '󰝰',
