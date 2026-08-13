@@ -24,7 +24,6 @@ require('lazy').setup({
   require 'plugins.neogit',
   require 'plugins.gitsigns',
   require 'plugins.conform',
-  require 'plugins.toggleterm',
   require 'plugins.persistence',
   require 'plugins.harpoon'
 });

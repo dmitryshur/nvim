@@ -12,10 +12,10 @@ return {
   config = function(_, opts)
     require('persistence').setup(opts)
 
-    -- Neither Neo-tree nor the toggleterm terminals survive `mksession` in any
-    -- useful form -- the tree comes back as an empty window, the terminal as a
-    -- dead buffer -- and `sessionoptions` includes `terminal`. Close them while
-    -- the session is being written so what gets restored is just the real files.
+    -- Neither Neo-tree nor terminal buffers survive `mksession` in any useful
+    -- form -- the tree comes back as an empty window, the terminal as a dead
+    -- buffer -- and `sessionoptions` includes `terminal`. Close them while the
+    -- session is being written so what gets restored is just the real files.
     vim.api.nvim_create_autocmd('User', {
       pattern = 'PersistenceSavePre',
       group = vim.api.nvim_create_augroup('persistence-cleanup', { clear = true }),

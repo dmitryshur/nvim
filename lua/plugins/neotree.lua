@@ -45,7 +45,7 @@ return {
     filesystem = {
       -- Without this, nothing watches the filesystem: `enable_refresh_on_write`
       -- only fires when *Neovim* writes a file, so anything that changes files
-      -- behind the tree's back (git restore, a toggleterm command, Neogit)
+      -- behind the tree's back (git restore, Neogit, an external command)
       -- leaves it showing stale entries and stale git status.
       --
       -- It also gates the `.git` watcher (see neo-tree/git/init.lua) -- that's

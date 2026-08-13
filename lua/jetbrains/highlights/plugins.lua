@@ -259,10 +259,6 @@ return {
   LazyCommitIssue = { fg = c.constant },
   LazyDimmed = { fg = c.fg_dim },
 
-  ------------------------------------------------------------- toggleterm --
-  ToggleTerm1FloatBorder = { fg = c.border, bg = c.bg },
-  ToggleTerm2FloatBorder = { fg = c.border, bg = c.bg },
-
   -------------------------------------------------------- treesitter tools --
   TreesitterContext = { bg = c.bg_cursorline },
   TreesitterContextLineNumber = { fg = c.line_nr, bg = c.bg_cursorline },

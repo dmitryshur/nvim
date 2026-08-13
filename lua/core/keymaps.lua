@@ -173,11 +173,6 @@ local format_buffer = function() require('conform').format { async = true, lsp_f
 
 vim.keymap.set({ 'n', 'x' }, '<leader>1', format_buffer, { desc = 'Format buffer' })
 
--- Same key toggles the floating terminal open and closed from anywhere,
--- including from inside the terminal itself (terminal mode). `<Cmd>` runs
--- without leaving the current mode, so insert/terminal mode are unaffected.
-vim.keymap.set({ 'n', 'i', 't' }, [[<C-\>]], '<Cmd>ToggleTerm<CR>', { desc = 'Toggle floating terminal' })
-
 -- Harpoon: a short, ordered list of files scoped to the cwd, so this project and
 -- the next one keep separate lists. Unlike marks A-Z, which are one global
 -- namespace shared across every project, and unlike the buffer list, which
