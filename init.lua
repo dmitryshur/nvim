@@ -8,12 +8,8 @@ end
 local rtp = vim.opt.rtp
 rtp:prepend(lazypath)
 
--- Local colorscheme (colors/jetbrains.lua), so it needs no plugin spec. Set
--- before lazy.setup so lualine's `theme = 'auto'` sees vim.g.colors_name and
--- picks up lua/lualine/themes/jetbrains.lua when it loads.
-vim.cmd.colorscheme 'jetbrains'
-
 require('lazy').setup({
+  require 'plugins.neomodern',
   require 'plugins.neotree',
   require 'plugins.lualine',
   require 'plugins.treesitter',
