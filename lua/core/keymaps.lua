@@ -120,6 +120,7 @@ vim.keymap.set('n', '<leader>?', function() require('telescope.builtin').keymaps
 
 vim.keymap.set('n', '<leader>gg', ':Neogit<CR>', { desc = 'Open Neogit' })
 vim.keymap.set('n', '<leader>gs', function() require('telescope.builtin').git_branches() end, { desc = 'Switch git branch' })
+vim.keymap.set('n', '<leader>gl', function() require('telescope.builtin').git_commits() end, { desc = 'Git log' })
 
 require('core.git_pull_request').setup()
 

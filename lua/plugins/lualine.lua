@@ -62,7 +62,7 @@ return {
           },
           {
             harpoon_slot,
-            color = { fg = require('neomodern.palette').get('moon', 'default').spec.func },
+            color = { fg = require("jetbrains.palette").link_text },
           }
         }
       },

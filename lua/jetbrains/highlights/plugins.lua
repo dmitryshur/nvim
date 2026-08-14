@@ -15,7 +15,7 @@ return {
   NeoTreeFileIcon = { fg = c.fg_muted },
   NeoTreeFileNameOpened = { fg = c.fg_bright },
   NeoTreeSymbolicLinkTarget = { fg = c.link_text },
-  NeoTreeIndentMarker = { fg = c.line_nr }, -- deliberately dim
+  NeoTreeIndentMarker = { fg = c.wrap_guide }, -- deliberately dim
   NeoTreeExpander = { fg = c.fg_dim },
   NeoTreeDotfile = { fg = c.hidden },
   NeoTreeHiddenByName = { fg = c.hidden },
