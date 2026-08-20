@@ -14,6 +14,7 @@ require('lazy').setup({
   require 'plugins.lualine',
   require 'plugins.treesitter',
   require 'plugins.telescope',
+  require 'plugins.fff',
   require 'plugins.lsp',
   require 'plugins.blink',
   require 'plugins.diffview',

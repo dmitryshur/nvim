@@ -97,18 +97,8 @@ vim.keymap.set('n', '<leader>w', '<C-w>p', { desc = 'Switch to last accessed win
 vim.keymap.set('n', '<leader>o', '<cmd>tabonly<CR>', { desc = 'Close all other tabs' })
 vim.keymap.set('n', '<leader>n', ':Neotree filesystem reveal left toggle<CR>', { desc = 'Toggle Neo-tree' })
 
-vim.keymap.set('n', '<leader>f', function() require('telescope.builtin').find_files() end, { desc = 'Telescope find files' })
--- Reopen the last live grep (query and selection intact) if there is one;
--- clear the prompt to start a new search.
-vim.keymap.set('n', '<leader><leader>', function()
-  local cached = require('telescope.state').get_global_key 'cached_pickers' or {}
-  for index, picker in ipairs(cached) do
-    if picker.prompt_title == 'Live Grep' then
-      return require('telescope.builtin').resume { cache_index = index }
-    end
-  end
-  require('telescope.builtin').live_grep()
-end, { desc = 'Telescope live grep (resumes last)' })
+vim.keymap.set('n', '<leader>f', function() require('fff').find_files() end, { desc = 'FFF find files' })
+vim.keymap.set('n', '<leader><leader>', function() require('fff').live_grep { resume = true } end, { desc = 'FFF live grep (resumes last)' })
 vim.keymap.set('n', '<tab>', function() require('telescope.builtin').buffers() end, { desc = 'Telescope buffers' })
 vim.keymap.set('n', '<leader>r', function() require('telescope.builtin').resume() end, { desc = 'Telescope resume' })
 vim.keymap.set('n', '<leader>t', '<cmd>Telescope telescope-tabs list_tabs<CR>', { desc = 'Telescope tabs' })
