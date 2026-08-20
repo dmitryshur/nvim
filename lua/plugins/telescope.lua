@@ -33,12 +33,17 @@ return {
             -- under layout_config rather than inside `horizontal` so it survives a
             -- change of layout_strategy.
             sorting_strategy = "ascending",
+            scroll_strategy = "limit",
             layout_config = { prompt_position = "top" },
             cache_picker = { num_pickers = 10 }, -- keep recent pickers resumable, not just the last one
             mappings = {
               i = {
                 ["<C-k>"] = actions.move_selection_previous, -- move to prev result
                 ["<C-j>"] = actions.move_selection_next, -- move to next result
+                ["<C-f>"] = actions.preview_scrolling_down,
+                ["<C-b>"] = actions.preview_scrolling_up,
+                ["<C-d>"] = actions.results_scrolling_down,
+                ["<C-u>"] = actions.results_scrolling_up,
                 ["<C-q>"] = actions.send_selected_to_qflist + actions.open_qflist,
                 ["<esc>"] = actions.close
               },

@@ -4,6 +4,7 @@ return {
   lazy = false,
   opts = {
     follow_symlinks = true,
+    wrap_around = false,
     layout = {
       prompt_position = 'top',
     },
