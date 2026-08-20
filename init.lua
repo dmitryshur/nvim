@@ -9,7 +9,7 @@ local rtp = vim.opt.rtp
 rtp:prepend(lazypath)
 
 require('lazy').setup({
-  require 'plugins.tokyonight',
+  require 'plugins.nord',
   require 'plugins.neotree',
   require 'plugins.lualine',
   require 'plugins.treesitter',
