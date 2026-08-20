@@ -62,7 +62,7 @@ return {
           },
           {
             harpoon_slot,
-            color = { fg = require("jetbrains.palette").link_text },
+            color = { fg = require('tokyonight.colors').setup({ style = 'moon' }).blue },
           }
         }
       },
