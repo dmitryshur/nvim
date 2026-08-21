@@ -18,6 +18,7 @@ return {
     },
     grep = {
       enable_filename_constraint = true,
+      max_matches_per_file = 5,
     },
   },
 }
