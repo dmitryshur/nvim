@@ -13,6 +13,7 @@ return {
         hl.DiffChange = { bg = blend(colors.aurora.yellow, background, 0.1) }
         hl.DiffDelete = { bg = blend(colors.aurora.red, background, 0.12) }
         hl.DiffText = { bg = blend(colors.frost.artic_water, background, 0.24) }
+        hl.ComplHint = { fg = colors.frost.artic_ocean, italic = true }
         hl.NeoTreeIndentMarker = { fg = '#2c2c32' }
       end,
     }
