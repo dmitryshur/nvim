@@ -4,7 +4,7 @@ return {
   config = function()
     local lualine = require("lualine")
     local lazy_status = require("lazy.status") -- to configure lazy pending updates count
-    local nord_palette = require('nord.colors').palette
+    local palette = require 'jetbrains.palette'
 
     -- Shows the harpoon slot when the current file is pinned, so <leader>bb's
     -- effect is visible without opening the list. Empty when it isn't pinned, so
@@ -63,7 +63,7 @@ return {
           },
           {
             harpoon_slot,
-            color = { fg = nord_palette.frost.ice },
+            color = { fg = palette.link },
           }
         }
       },

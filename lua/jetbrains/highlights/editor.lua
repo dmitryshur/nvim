@@ -155,7 +155,7 @@ return {
   LspCodeLensSeparator = { fg = c.line_nr },
   LspSignatureActiveParameter = { fg = c.fg_bright, bg = c.bg_selected, bold = true },
   LspInfoBorder = { fg = c.border, bg = c.bg_panel },
-  ComplHint = { fg = c.fg_dim, italic = true },
+  ComplHint = { fg = c.hint, italic = true },
   ComplHintMore = { fg = c.hint },
 
   --------------------------------------------------------------- snippets --
