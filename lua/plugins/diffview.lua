@@ -1,4 +1,4 @@
-local function set_changed_line_highlight(winid, highlight)
+local function set_changed_line_highlight(winid, line_highlight, text_highlight)
   local changed_groups = {
     DiffChange = true,
     DiffText = true,
@@ -11,9 +11,9 @@ local function set_changed_line_highlight(winid, highlight)
     if not changed_groups[group] then winhighlight[#winhighlight + 1] = entry end
   end
 
-  for _, group in ipairs { 'DiffChange', 'DiffText', 'DiffTextAdd' } do
-    winhighlight[#winhighlight + 1] = group .. ':' .. highlight
-  end
+  winhighlight[#winhighlight + 1] = 'DiffChange:' .. line_highlight
+  winhighlight[#winhighlight + 1] = 'DiffText:' .. text_highlight
+  winhighlight[#winhighlight + 1] = 'DiffTextAdd:' .. text_highlight
 
   vim.wo[winid].winhighlight = table.concat(winhighlight, ',')
 end
@@ -30,8 +30,8 @@ return {
     --
     -- This remaps DiffAdd to DiffviewDiffAddAsDelete on the left pane only, so
     -- removed code is red there and added code stays green on the right. Off by
-    -- default upstream. The theme already defines DiffviewDiffAddAsDelete; the
-    -- DiffviewDiffDeleteDim it also pulls in links to Comment.
+    -- default upstream. Diffview also uses DiffviewDiffDeleteDim for the blank
+    -- filler rows opposite added or removed content.
     enhanced_diff_hl = true,
     -- The left pane's buffer is named `diffview://<repo>/.git/:0:/<path>` -- git's
     -- index-stage notation, not a directory that exists. tsgo attaches to it all
@@ -59,8 +59,13 @@ return {
         -- Render those as removals on the old side and additions on the new side,
         -- matching two-action diff viewers while preserving neutral merge panes.
         if ctx.layout_name:match '^diff2_' then
-          local highlight = ctx.symbol == 'a' and 'DiffviewDiffAddAsDelete' or ctx.symbol == 'b' and 'DiffviewDiffAdd'
-          if highlight then set_changed_line_highlight(winid, highlight) end
+          local line_highlight = ctx.symbol == 'a' and 'DiffviewDiffAddAsDelete'
+            or ctx.symbol == 'b' and 'DiffviewDiffAdd'
+          local text_highlight = ctx.symbol == 'a' and 'DiffviewDiffTextAsDelete'
+            or ctx.symbol == 'b' and 'DiffviewDiffTextAdd'
+          if line_highlight and text_highlight then
+            set_changed_line_highlight(winid, line_highlight, text_highlight)
+          end
         end
       end,
     },
@@ -79,4 +84,20 @@ return {
       },
     },
   },
+  config = function(_, opts)
+    require('diffview').setup(opts)
+
+    -- Keep syntax foregrounds intact and distinguish whole changed lines from
+    -- the exact changed text with a slightly stronger background.
+    for group, highlight in pairs {
+      DiffviewDiffAdd = { bg = '#242927' },
+      DiffviewDiffTextAdd = { bg = '#303b33' },
+      DiffviewDiffAddAsDelete = { bg = '#2f2627' },
+      DiffviewDiffTextAsDelete = { bg = '#483233' },
+      DiffviewDiffChange = { bg = '#262a32' },
+      DiffviewDiffText = { bg = '#333a4b' },
+    } do
+      vim.api.nvim_set_hl(0, group, highlight)
+    end
+  end,
 }
