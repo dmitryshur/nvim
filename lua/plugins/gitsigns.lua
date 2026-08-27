@@ -44,24 +44,4 @@ return {
       map('n', '<leader>hb', gitsigns.blame_line, 'Blame line')
     end,
   },
-  config = function(_, opts)
-    require('gitsigns').setup(opts)
-
-    -- Whole hunk lines stay subtle; word-level regions carry the stronger tint.
-    -- Background-only groups preserve Treesitter and semantic-token foregrounds.
-    for group, highlight in pairs {
-      GitSignsAddLn = { bg = '#242927' },
-      GitSignsChangeLn = { bg = '#262a32' },
-      GitSignsDeleteVirtLn = { bg = '#2f2627' },
-      GitSignsAddInline = { bg = '#303b33' },
-      GitSignsChangeInline = { bg = '#333a4b' },
-      GitSignsDeleteInline = { bg = '#483233' },
-      GitSignsAddLnInline = { bg = '#303b33' },
-      GitSignsChangeLnInline = { bg = '#333a4b' },
-      GitSignsDeleteLnInline = { bg = '#483233' },
-      GitSignsDeleteVirtLnInLine = { bg = '#483233' },
-    } do
-      vim.api.nvim_set_hl(0, group, highlight)
-    end
-  end,
 }

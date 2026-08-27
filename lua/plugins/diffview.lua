@@ -84,20 +84,4 @@ return {
       },
     },
   },
-  config = function(_, opts)
-    require('diffview').setup(opts)
-
-    -- Keep syntax foregrounds intact and distinguish whole changed lines from
-    -- the exact changed text with a slightly stronger background.
-    for group, highlight in pairs {
-      DiffviewDiffAdd = { bg = '#242927' },
-      DiffviewDiffTextAdd = { bg = '#303b33' },
-      DiffviewDiffAddAsDelete = { bg = '#2f2627' },
-      DiffviewDiffTextAsDelete = { bg = '#483233' },
-      DiffviewDiffChange = { bg = '#262a32' },
-      DiffviewDiffText = { bg = '#333a4b' },
-    } do
-      vim.api.nvim_set_hl(0, group, highlight)
-    end
-  end,
 }

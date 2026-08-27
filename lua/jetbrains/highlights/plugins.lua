@@ -217,6 +217,8 @@ return {
   DiffviewStatusUnmerged = { fg = c.conflict },
   DiffviewStatusIgnored = { fg = c.ignored },
   DiffviewDiffAddAsDelete = { bg = c.git_delete_bg },
+  DiffviewDiffTextAdd = { bg = c.git_word_add },
+  DiffviewDiffTextAsDelete = { bg = c.git_word_delete },
   DiffviewDiffDelete = { fg = c.line_nr, bg = c.bg },
   DiffviewReference = { fg = c.constant },
 

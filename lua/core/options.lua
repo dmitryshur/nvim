@@ -22,7 +22,7 @@ option.smartcase = true -- if you include mixed case in your search, assumes you
 -- cursor line
 option.cursorline = true -- highlight the current cursor line
 
--- turn on termguicolors for nightfly colorscheme to work
+-- Use full RGB colors for the active colorscheme.
 option.termguicolors = true
 option.background = "dark" -- colorschemes that can be light or dark will be made dark
 option.signcolumn = "yes" -- show sign column so that text doesn't shift
