@@ -13,7 +13,7 @@ rtp:prepend(lazypath)
 -- vim.cmd.colorscheme 'jetbrains'
 
 require('lazy').setup {
-  require 'plugins.kanagawa',
+  require 'plugins.gruvbox-material',
   require 'plugins.neotree',
   require 'plugins.lualine',
   require 'plugins.treesitter',

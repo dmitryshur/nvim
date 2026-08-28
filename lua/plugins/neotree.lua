@@ -1,10 +1,10 @@
 return {
-  "nvim-neo-tree/neo-tree.nvim",
-  branch = "v3.x",
+  'nvim-neo-tree/neo-tree.nvim',
+  branch = 'v3.x',
   dependencies = {
-    "nvim-lua/plenary.nvim",
-    "MunifTanjim/nui.nvim",
-    "nvim-tree/nvim-web-devicons",
+    'nvim-lua/plenary.nvim',
+    'MunifTanjim/nui.nvim',
+    'nvim-tree/nvim-web-devicons',
   },
   cmd = 'Neotree',
   opts = {
@@ -24,12 +24,16 @@ return {
     commands = {
       system_open = function(state)
         local node = state.tree:get_node()
-        if not node then return end
+        if not node then
+          return
+        end
 
         -- vim.ui.open returns the spawned handle plus an error string; it only
         -- reports failure to *launch* the opener, not what the opener then does.
         local _, err = vim.ui.open(node.path)
-        if err then vim.notify(err, vim.log.levels.ERROR, { title = 'Neo-tree' }) end
+        if err then
+          vim.notify(err, vim.log.levels.ERROR, { title = 'Neo-tree' })
+        end
       end,
     },
     window = {
