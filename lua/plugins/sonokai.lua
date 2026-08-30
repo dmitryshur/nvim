@@ -4,7 +4,7 @@ return {
   priority = 1000,
   config = function()
     vim.o.background = 'dark'
-    vim.g.sonokai_style = 'shusia'
+    vim.g.sonokai_style = 'default'
 
     vim.api.nvim_create_autocmd('ColorScheme', {
       group = vim.api.nvim_create_augroup('sonokai-custom-highlights', { clear = true }),
