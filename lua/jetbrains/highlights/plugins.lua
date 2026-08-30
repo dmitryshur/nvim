@@ -3,10 +3,10 @@ local c = require 'jetbrains.palette'
 
 return {
   --------------------------------------------------------------- neo-tree --
-  NeoTreeNormal = { fg = c.fg_muted, bg = c.bg_panel },
-  NeoTreeNormalNC = { fg = c.fg_muted, bg = c.bg_panel },
-  NeoTreeEndOfBuffer = { fg = c.bg_panel, bg = c.bg_panel },
-  NeoTreeWinSeparator = { fg = c.border, bg = c.bg_panel },
+  NeoTreeNormal = { fg = c.fg_muted, bg = c.bg },
+  NeoTreeNormalNC = { fg = c.fg_muted, bg = c.bg },
+  NeoTreeEndOfBuffer = { fg = c.bg, bg = c.bg },
+  NeoTreeWinSeparator = { fg = c.border, bg = c.bg },
   NeoTreeCursorLine = { bg = c.bg_selected },
   NeoTreeRootName = { fg = c.fg_bright, bold = true },
   NeoTreeDirectoryName = { fg = c.fg_muted },
@@ -15,7 +15,7 @@ return {
   NeoTreeFileIcon = { fg = c.fg_muted },
   NeoTreeFileNameOpened = { fg = c.fg_bright },
   NeoTreeSymbolicLinkTarget = { fg = c.link_text },
-  NeoTreeIndentMarker = { fg = c.wrap_guide }, -- deliberately dim
+  NeoTreeIndentMarker = { fg = c.bg_disabled }, -- deliberately dim
   NeoTreeExpander = { fg = c.fg_dim },
   NeoTreeDotfile = { fg = c.hidden },
   NeoTreeHiddenByName = { fg = c.hidden },
