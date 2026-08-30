@@ -1,10 +1,15 @@
 return {
   'dmtrKovalenko/fff',
-  build = function() require('fff.download').download_or_build_binary() end,
+  build = function()
+    require('fff.download').download_or_build_binary()
+  end,
   lazy = false,
   opts = {
     follow_symlinks = true,
     wrap_around = false,
+    hl = {
+      cursor = 'PmenuSel',
+    },
     layout = {
       prompt_position = 'top',
     },
