@@ -10,10 +10,8 @@ end
 local rtp = vim.opt.rtp
 rtp:prepend(lazypath)
 
--- vim.cmd.colorscheme 'jetbrains'
-
 require('lazy').setup {
-  require 'plugins.vscode',
+  require 'plugins.sonokai',
   require 'plugins.neotree',
   require 'plugins.lualine',
   require 'plugins.treesitter',

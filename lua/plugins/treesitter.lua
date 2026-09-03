@@ -19,11 +19,15 @@ return {
 
     vim.api.nvim_create_autocmd("FileType", {
       callback = function(args)
-        local ft = vim.bo.filetype
-        local bt = vim.bo.buftype
         local buf = args.buf
+        local ft = vim.bo[buf].filetype
+        local bt = vim.bo[buf].buftype
+        local buffer_name = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf), ':t')
+        -- FFF reuses this nofile buffer for real file contents and changes its
+        -- filetype for each selection, so it still needs a Tree-sitter parser.
+        local is_fff_preview = bt == 'nofile' and buffer_name == 'fffile preview'
 
-        if bt ~= "" then
+        if bt ~= "" and not is_fff_preview then
           return
         end   -- don't run further.
 
@@ -34,8 +38,8 @@ return {
 
         ---------------------[ treesitter indent ]-------------------------------
 
-        if not vim.tbl_contains({ "python", "html", "yaml", "markdown" }, ft) then
-          vim.bo.indentexpr = "v:lua.require('nvim-treesitter').indentexpr()"
+        if not is_fff_preview and not vim.tbl_contains({ "python", "html", "yaml", "markdown" }, ft) then
+          vim.bo[buf].indentexpr = "v:lua.require('nvim-treesitter').indentexpr()"
         end
 
         --------------------[ treesitter parsers ]-------------------------------

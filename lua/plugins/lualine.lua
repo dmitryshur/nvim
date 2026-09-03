@@ -4,7 +4,8 @@ return {
   config = function()
     local lualine = require("lualine")
     local lazy_status = require("lazy.status") -- to configure lazy pending updates count
-    local palette = require 'jetbrains.palette'
+    local sonokai_config = vim.fn['sonokai#get_configuration']()
+    local palette = vim.fn['sonokai#get_palette'](sonokai_config.style, sonokai_config.colors_override)
 
     -- Shows the harpoon slot when the current file is pinned, so <leader>bb's
     -- effect is visible without opening the list. Empty when it isn't pinned, so
@@ -41,7 +42,7 @@ return {
           {
             lazy_status.updates,
             cond = lazy_status.has_updates,
-            color = { fg = "#ff9e64" },
+            color = { fg = palette.orange[1] },
           },
           { "branch" },
           { "fileformat" },
@@ -63,7 +64,7 @@ return {
           },
           {
             harpoon_slot,
-            color = { fg = palette.link },
+            color = { fg = palette.blue[1] },
           }
         }
       },
