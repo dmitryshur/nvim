@@ -14,6 +14,8 @@ return {
       javascriptreact = { 'oxfmt' },
       typescript = { 'oxfmt' },
       typescriptreact = { 'oxfmt' },
+      html = { 'oxfmt' },
+      json = { 'oxfmt' },
     },
   },
 }
