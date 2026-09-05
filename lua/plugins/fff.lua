@@ -8,7 +8,10 @@ return {
     follow_symlinks = true,
     wrap_around = false,
     hl = {
-      cursor = 'PmenuSel',
+      normal = 'FFFNormal',
+      border = 'FFFBorder',
+      title = 'FFFTitle',
+      cursor = 'FFFCursor',
     },
     layout = {
       prompt_position = 'top',
