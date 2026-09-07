@@ -11,7 +11,7 @@ local rtp = vim.opt.rtp
 rtp:prepend(lazypath)
 
 require('lazy').setup {
-  require 'plugins.gruvbox-material',
+  require 'plugins.sonokai',
   require 'plugins.neotree',
   require 'plugins.lualine',
   require 'plugins.treesitter',
