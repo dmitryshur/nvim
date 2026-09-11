@@ -40,6 +40,12 @@ return {
   NeoTreeGitConflict = { fg = c.conflict },
   NeoTreeGitIgnored = { fg = c.ignored },
 
+  --------------------------------------------------------------------- fff --
+  FFFNormal = { fg = c.fg, bg = c.bg },
+  FFFBorder = { fg = c.border, bg = c.bg },
+  FFFTitle = { fg = c.fg_bright, bg = c.bg, bold = true },
+  FFFCursor = { fg = c.fg, bg = c.bg_cursorline },
+
   -------------------------------------------------------------- telescope --
   TelescopeNormal = { fg = c.fg, bg = c.bg_panel },
   TelescopeBorder = { fg = c.border, bg = c.bg_panel },

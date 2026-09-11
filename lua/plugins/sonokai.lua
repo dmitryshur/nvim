@@ -5,6 +5,9 @@ return {
   config = function()
     vim.o.background = 'dark'
     vim.g.sonokai_style = 'default'
+    vim.g.sonokai_colors_override = {
+      bg0 = { '#27292e', '235' },
+    }
 
     vim.api.nvim_create_autocmd('ColorScheme', {
       group = vim.api.nvim_create_augroup('sonokai-custom-highlights', { clear = true }),
