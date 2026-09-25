@@ -1,6 +1,6 @@
 return {
   'sainnhe/sonokai',
-  lazy = false,
+  lazy = true,
   priority = 1000,
   config = function()
     vim.o.background = 'dark'
