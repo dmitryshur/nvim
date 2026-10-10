@@ -66,12 +66,14 @@ vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left wind
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
--- Resize the current window. Pairs with the <C-hjkl> navigation above: same
--- modifier, arrows instead of letters.
-vim.keymap.set('n', '<C-Up>', '<cmd>resize +3<CR>', { desc = 'Increase window height' })
-vim.keymap.set('n', '<C-Down>', '<cmd>resize -3<CR>', { desc = 'Decrease window height' })
-vim.keymap.set('n', '<C-Left>', '<cmd>vertical resize -5<CR>', { desc = 'Decrease window width' })
-vim.keymap.set('n', '<C-Right>', '<cmd>vertical resize +5<CR>', { desc = 'Increase window width' })
+-- Resize the current window: h/l narrower/wider, k/j taller/shorter. Pairs with
+-- the <C-hjkl> navigation above: same letters, Alt instead of Ctrl. Zellij only
+-- binds Alt+hjkl in its scroll mode, so they reach Neovim from the default
+-- locked mode.
+vim.keymap.set('n', '<M-k>', '<cmd>resize +3<CR>', { desc = 'Increase window height' })
+vim.keymap.set('n', '<M-j>', '<cmd>resize -3<CR>', { desc = 'Decrease window height' })
+vim.keymap.set('n', '<M-h>', '<cmd>vertical resize -5<CR>', { desc = 'Decrease window width' })
+vim.keymap.set('n', '<M-l>', '<cmd>vertical resize +5<CR>', { desc = 'Increase window width' })
 
 -- Jump straight to window N, numbered as `:h winnr()` does it: top-left first,
 -- so Neotree is 1 whenever it's open.
@@ -91,9 +93,9 @@ end
 -- `<C-w>p` (last accessed window) rather than `<C-w>w` (cycle), so it toggles
 -- back and forth instead of walking past the window you came from.
 vim.keymap.set('n', '<leader>w', '<C-w>p', { desc = 'Switch to last accessed window' })
--- Neogit opens most of its buffers as tabs, and Diffview lives in one too, so
--- they pile up. Diffview cleans itself up on TabClosed, so this is safe to use
--- instead of DiffviewClose.
+-- Neogit opens most of its buffers as tabs, and CodeDiff lives in one too, so
+-- they pile up. CodeDiff cleans its session up on TabClosed, so this is safe to
+-- use instead of closing the view.
 vim.keymap.set('n', '<leader>o', '<cmd>tabonly<CR>', { desc = 'Close all other tabs' })
 vim.keymap.set('n', '<leader>n', ':Neotree filesystem reveal left toggle<CR>', { desc = 'Toggle Neo-tree' })
 
@@ -114,13 +116,17 @@ vim.keymap.set('n', '<leader>gl', function() require('telescope.builtin').git_co
 
 require('core.git_pull_request').setup()
 
--- Diffview lives in its own tabpage, so `:q` only peels off one window at a
--- time. DiffviewClose tears the whole tab down in one go; toggling through it
--- means the same key that opened the view also closes it.
-local toggle_diffview = function(open_cmd)
+-- CodeDiff lives in its own tabpage, so `:q` only peels off one window at a
+-- time. Closing the session tears the whole tab down in one go; toggling through
+-- it means the same key that opened the view also closes it. `lifecycle` is
+-- codediff's internal module -- its public API has no open/close -- and the
+-- version is pinned in lazy-lock.json.
+local toggle_codediff = function(open_cmd)
   return function()
-    if require('diffview.lib').get_current_view() then
-      vim.cmd 'DiffviewClose'
+    local lifecycle = require 'codediff.ui.lifecycle'
+    local tabpage = vim.api.nvim_get_current_tabpage()
+    if lifecycle.get_session(tabpage) then
+      lifecycle.close(tabpage)
     else
       vim.cmd(open_cmd)
     end
@@ -141,8 +147,8 @@ local toggle_blame = function()
   vim.cmd 'Gitsigns blame'
 end
 
-vim.keymap.set('n', '<leader>gd', toggle_diffview 'DiffviewOpen', { desc = 'Toggle git diff view' })
-vim.keymap.set('n', '<leader>gh', toggle_diffview 'DiffviewFileHistory %', { desc = 'Toggle git history for current file' })
+vim.keymap.set('n', '<leader>gd', toggle_codediff 'CodeDiff', { desc = 'Toggle git diff view' })
+vim.keymap.set('n', '<leader>gh', toggle_codediff 'CodeDiff history %', { desc = 'Toggle git history for current file' })
 vim.keymap.set('n', '<leader>gb', toggle_blame, { desc = 'Toggle git blame' })
 vim.keymap.set('n', '<leader>gr', function() require('core.git_file_diff').pick() end, { desc = 'Diff current file between commits' })
 -- The repo-wide sibling of <leader>gr, and capitalised for exactly that reason:

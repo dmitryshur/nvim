@@ -1,4 +1,4 @@
--- Pick branches and diff every file that differs between them, in Diffview.
+-- Pick branches and diff every file that differs between them, in CodeDiff.
 --
 -- The sibling of core.git_file_diff: that one is commit-scoped and file-scoped
 -- (this file's history, one file in the diff), this one is branch-scoped and
@@ -18,6 +18,15 @@ local M = {}
 
 local function notify(message, level) vim.notify(message, level, { title = 'Git branch diff' }) end
 
+-- Whether `head` is the commit you have checked out, either by name or because
+-- the branch points at it.
+local function is_checked_out(head)
+  if head == 'HEAD' then return true end
+  local result = vim.system({ 'git', 'rev-parse', head, 'HEAD' }, { cwd = branches.root(), text = true }):wait()
+  local shas = vim.split(vim.trim(result.stdout or ''), '\n')
+  return result.code == 0 and shas[1] == shas[2]
+end
+
 function M.pick()
   branches.pick {
     title = 'Diff branches (<CR> vs HEAD, or <Tab> base then head)',
@@ -35,9 +44,12 @@ function M.pick()
       if not base then return notify('No branch selected', vim.log.levels.WARN) end
       if base == head then return notify('Base and head are the same', vim.log.levels.WARN) end
 
-      -- --imply-local points the HEAD end at the real files rather than buffers
-      -- built from git, which is what keeps LSP working while you read.
-      vim.cmd(string.format('DiffviewOpen %s...%s --imply-local', base, head))
+      -- Leaving the target off (`base...`) diffs the merge base against the
+      -- working tree, so when head is what you have checked out, that side is
+      -- the real files rather than buffers built from git -- which is what keeps
+      -- LSP working while you read.
+      local target = is_checked_out(head) and '' or head
+      vim.cmd(string.format('CodeDiff %s...%s', base, target))
     end,
   }
 end

@@ -1,17 +1,18 @@
--- Pick commits from the current file's history and diff them in Diffview.
+-- Pick commits from the current file's history and diff them in CodeDiff.
 --
 -- Neogit's diff popup can produce a range (`d` then `r`) but always diffs every
 -- file in it -- its "paths" action is an unimplemented placeholder. Telescope's
 -- git_bcommits is file-scoped but checks the file out on <CR> instead of
 -- diffing. This fills the gap: file-scoped history, range selection, straight
--- into Diffview.
+-- into CodeDiff.
 local M = {}
 
--- Diffview lays out a range oldest-on-the-left, and `git log` lists newest
--- first, so the highest log index is the left side of the range.
+-- CodeDiff puts the first revision on the left, and `git log` lists newest
+-- first, so the highest log index goes first. Returned as two revisions rather
+-- than `a..b`: CodeDiff doesn't parse two-dot ranges.
 local function build_range(marked)
   table.sort(marked, function(left, right) return left.log_index < right.log_index end)
-  return marked[#marked].value .. '..' .. marked[1].value
+  return marked[#marked].value .. ' ' .. marked[1].value
 end
 
 local function git(args, cwd)
@@ -121,8 +122,9 @@ function M.pick()
           if #marked >= 2 then
             revision = build_range(marked)
           else
-            -- Nothing marked: a bare revision makes Diffview compare it against
-            -- the working tree, so uncommitted changes show up too.
+            -- Nothing marked: a bare revision makes CodeDiff compare it against
+            -- the working tree, so uncommitted changes show up too, and the
+            -- right side stays the real, editable file.
             local entry = action_state.get_selected_entry()
             revision = entry and entry.value
           end
@@ -131,7 +133,9 @@ function M.pick()
           if not revision then
             return notify('No commit selected', vim.log.levels.WARN)
           end
-          vim.cmd(string.format('DiffviewOpen %s -- %s', revision, vim.fn.fnameescape(file)))
+          -- `file` diffs the current buffer, which is this file again now that
+          -- the picker has closed.
+          vim.cmd('CodeDiff file ' .. revision)
         end)
         return true
       end,

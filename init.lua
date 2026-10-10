@@ -10,7 +10,7 @@ end
 local rtp = vim.opt.rtp
 rtp:prepend(lazypath)
 
-vim.cmd.colorscheme 'jetbrains'
+vim.cmd.colorscheme 'zedokai'
 
 require('lazy').setup {
   require 'plugins.sonokai',
@@ -21,7 +21,7 @@ require('lazy').setup {
   require 'plugins.fff',
   require 'plugins.lsp',
   require 'plugins.blink',
-  require 'plugins.diffview',
+  require 'plugins.codediff',
   require 'plugins.neogit',
   require 'plugins.gitsigns',
   require 'plugins.conform',

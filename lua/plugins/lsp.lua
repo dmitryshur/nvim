@@ -192,11 +192,6 @@ return {
       -- Enable the following language servers
       --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
       --  See `:help lsp-config` for information about keys and how to configure
-      -- Captured before the override below so oxlint's own root-marker logic
-      -- (package.json mentioning oxlint, vite.config.ts with a lint field, ...)
-      -- keeps working for real files.
-      local upstream_oxlint_root_dir = vim.lsp.config.oxlint.root_dir
-
       ---@type table<string, vim.lsp.Config>
       local servers = {
          clangd = {},
@@ -229,18 +224,6 @@ return {
         -- Prefers the project-local node_modules/.bin/oxlint over the Mason one.
          oxlint = {
           settings = { typeAware = false },
-          -- Diffview's `diffview://...` buffers report filetype=typescript, so
-          -- oxlint tries to start for them. Upstream's root_dir can't walk a
-          -- pseudo-path: vim.fs.find falls back to the cwd and returns a
-          -- *relative* marker, making root_dir '.'. The oxc server rejects
-          -- `file://.` with InvalidParams, which surfaced as an error whenever
-          -- <leader>gd / <leader>gh opened a diff. Real files only; everything
-          -- else defers to upstream so the marker logic stays in one place.
-          root_dir = function(bufnr, on_dir)
-            local fname = vim.api.nvim_buf_get_name(bufnr)
-            if fname == '' or fname:find '://' then return end
-            return upstream_oxlint_root_dir(bufnr, on_dir)
-          end,
         },
          tailwindcss = {},
          stylelint_lsp = {

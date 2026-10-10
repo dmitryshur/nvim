@@ -9,6 +9,11 @@ return {
   cmd = 'Neotree',
   opts = {
     default_component_configs = {
+      -- No blank column ahead of every row (the default is 1): one more cell for
+      -- names in a narrow sidebar.
+      indent = {
+        padding = 0,
+      },
       icon = {
         folder_closed = '󰉋',
         folder_open = '󰝰',
