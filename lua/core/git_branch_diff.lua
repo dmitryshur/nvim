@@ -10,7 +10,7 @@
 -- that landed on the base branch after the feature branch started are excluded.
 -- Two dots would fold them in and make the review look bigger than it is.
 --
--- The listing itself lives in core.git_branches, shared with pull and merge.
+-- The listing itself lives in core.git_branches.
 
 local branches = require 'core.git_branches'
 
@@ -20,9 +20,9 @@ local function notify(message, level) vim.notify(message, level, { title = 'Git 
 
 -- Whether `head` is the commit you have checked out, either by name or because
 -- the branch points at it.
-local function is_checked_out(head)
+local function is_checked_out(head, root)
   if head == 'HEAD' then return true end
-  local result = vim.system({ 'git', 'rev-parse', head, 'HEAD' }, { cwd = branches.root(), text = true }):wait()
+  local result = vim.system({ 'git', 'rev-parse', head, 'HEAD' }, { cwd = root, text = true }):wait()
   local shas = vim.split(vim.trim(result.stdout or ''), '\n')
   return result.code == 0 and shas[1] == shas[2]
 end
@@ -30,7 +30,7 @@ end
 function M.pick()
   branches.pick {
     title = 'Diff branches (<CR> vs HEAD, or <Tab> base then head)',
-    on_select = function(selected, marked)
+    on_select = function(selected, marked, root)
       local base, head
       if #marked >= 2 then
         base, head = marked[1], marked[2]
@@ -48,7 +48,7 @@ function M.pick()
       -- working tree, so when head is what you have checked out, that side is
       -- the real files rather than buffers built from git -- which is what keeps
       -- LSP working while you read.
-      local target = is_checked_out(head) and '' or head
+      local target = is_checked_out(head, root) and '' or head
       vim.cmd(string.format('CodeDiff %s...%s', base, target))
     end,
   }

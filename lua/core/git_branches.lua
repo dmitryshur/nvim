@@ -1,9 +1,6 @@
--- A telescope picker over the repository's branches.
---
--- Shared by everything that starts with "which branch?": diffing two of them
--- (core.git_branch_diff), pulling one, merging one (core.git_remote). Only the
--- selection contract differs between those, so callers pass an `on_select` and
--- get the listing, the columns and the log preview for free.
+-- A telescope picker over the repository's branches, for picking the two ends of
+-- a diff in core.git_branch_diff. The caller passes an `on_select` and gets the
+-- listing, the columns and the log preview.
 
 local columns = require 'core.picker_columns'
 
@@ -23,7 +20,7 @@ end
 
 -- Resolved from the current buffer rather than the cwd, so a file opened from
 -- another repository operates on *its* repository.
-function M.root()
+local function repo_root()
   local file = vim.api.nvim_buf_get_name(0)
   local from = (file ~= '' and vim.bo.buftype == '') and vim.fs.dirname(file) or vim.uv.cwd()
   local toplevel, err = git({ 'rev-parse', '--show-toplevel' }, from)
@@ -31,20 +28,16 @@ function M.root()
   return toplevel[1]
 end
 
-function M.remotes(root) return git({ 'remote' }, root) or {} end
-
 -- Most recently committed first -- the branch you want is nearly always near the
--- top. `remote_only` is for operations that need something to fetch from.
-local function collect(root, remote_only)
-  local refs = remote_only and { 'refs/remotes' } or { 'refs/heads', 'refs/remotes' }
-  local lines, err = git(
-    vim.list_extend({
-      'for-each-ref',
-      '--sort=-committerdate',
-      '--format=%(refname:short)\t%(committerdate:short)\t%(authorname)\t%(symref)\t%(contents:subject)',
-    }, refs),
-    root
-  )
+-- top.
+local function collect(root)
+  local lines, err = git({
+    'for-each-ref',
+    '--sort=-committerdate',
+    '--format=%(refname:short)\t%(committerdate:short)\t%(authorname)\t%(symref)\t%(contents:subject)',
+    'refs/heads',
+    'refs/remotes',
+  }, root)
   if not lines then return nil, err end
 
   local branches = {}
@@ -77,12 +70,12 @@ local build_displayer = columns.displayer {
   },
 }
 
---- @param opts { title: string, remote_only?: boolean, on_select: fun(selected: string?, marked: string[], root: string) }
+--- @param opts { title: string, on_select: fun(selected: string?, marked: string[], root: string) }
 function M.pick(opts)
-  local root, err = M.root()
+  local root, err = repo_root()
   if not root then return notify(err, vim.log.levels.WARN) end
 
-  local branches, list_err = collect(root, opts.remote_only)
+  local branches, list_err = collect(root)
   if not branches then return notify(list_err, vim.log.levels.ERROR) end
   if #branches == 0 then return notify('No branches found', vim.log.levels.WARN) end
 

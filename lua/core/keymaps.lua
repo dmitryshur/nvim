@@ -111,8 +111,6 @@ vim.keymap.set('n', '<leader>t', '<cmd>Telescope telescope-tabs list_tabs<CR>', 
 vim.keymap.set('n', '<leader>?', function() require('telescope.builtin').keymaps() end, { desc = 'Telescope keymaps' })
 
 vim.keymap.set('n', '<leader>gg', ':Neogit<CR>', { desc = 'Open Neogit' })
-vim.keymap.set('n', '<leader>gs', function() require('telescope.builtin').git_branches() end, { desc = 'Switch git branch' })
-vim.keymap.set('n', '<leader>gl', function() require('telescope.builtin').git_commits() end, { desc = 'Git log' })
 
 require('core.git_pull_request').setup()
 
@@ -155,13 +153,6 @@ vim.keymap.set('n', '<leader>gr', function() require('core.git_file_diff').pick(
 -- pick branches instead of commits, and get every changed file rather than just
 -- this one. Reviewing a pull request locally.
 vim.keymap.set('n', '<leader>gR', function() require('core.git_branch_diff').pick() end, { desc = 'Diff all files between branches' })
-
--- Both run async and report through vim.notify. Fetch prunes, so branches deleted
--- upstream stop showing up in the <leader>gR picker; pull reloads changed buffers
--- afterwards. See core.git_remote.
-vim.keymap.set('n', '<leader>gf', function() require('core.git_remote').fetch() end, { desc = 'Git fetch (prune)' })
-vim.keymap.set('n', '<leader>gp', function() require('core.git_remote').pull() end, { desc = 'Git pull (pick a remote branch)' })
-vim.keymap.set('n', '<leader>gm', function() require('core.git_remote').merge() end, { desc = 'Git merge (pick a branch)' })
 
 -- Manual format. In visual mode conform narrows to the selected range.
 -- `lsp_format = 'fallback'` mirrors conform's format_on_save so the manual and
