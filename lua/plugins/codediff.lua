@@ -14,6 +14,16 @@ local function scroll_diff(keys)
   end
 end
 
+-- Expr rhs: `diff_keys` when the cursor is in one of this tab's diff panes,
+-- `keys` everywhere else. A pane can't carry the mapping itself -- the working
+-- side is the real file buffer, which would keep it after the view closes.
+local function in_diff_pane(keys, diff_keys)
+  return function()
+    local session = require('codediff.ui.lifecycle').get_session(vim.api.nvim_get_current_tabpage())
+    return (session and not vim.bo.filetype:find '^codediff%-') and diff_keys or keys
+  end
+end
+
 -- Stage or unstage the explorer entry under the cursor -- a file, or a folder
 -- with everything in it. codediff itself only offers a toggle, so this calls it
 -- only when the entry sits in one of `groups`: `s` on an already-staged file
@@ -35,14 +45,18 @@ return {
   config = function(_, opts)
     require('codediff').setup(opts)
 
-    -- <C-f> / <C-b> in the explorer and history panels page through the selected
-    -- file instead of the list; j/k still move through the list.
+    -- <C-f> / <C-b> scroll the diff half a page (<C-d> / <C-u>) rather than a
+    -- full one: in the diff panes, and from the explorer and history panels,
+    -- where they move the selected file instead of the list (j/k still move
+    -- through the list). Outside a CodeDiff tab both keys are untouched.
+    vim.keymap.set('n', '<C-f>', in_diff_pane('<C-f>', '<C-d>'), { expr = true, desc = 'Scroll down (half a page in CodeDiff)' })
+    vim.keymap.set('n', '<C-b>', in_diff_pane('<C-b>', '<C-u>'), { expr = true, desc = 'Scroll up (half a page in CodeDiff)' })
     vim.api.nvim_create_autocmd('FileType', {
       group = vim.api.nvim_create_augroup('codediff-scroll-diff', { clear = true }),
       pattern = { 'codediff-explorer', 'codediff-history' },
       callback = function(event)
-        vim.keymap.set('n', '<C-f>', scroll_diff '<C-f>', { buffer = event.buf, desc = 'Scroll diff down a page' })
-        vim.keymap.set('n', '<C-b>', scroll_diff '<C-b>', { buffer = event.buf, desc = 'Scroll diff up a page' })
+        vim.keymap.set('n', '<C-f>', scroll_diff '<C-d>', { buffer = event.buf, desc = 'Scroll diff down half a page' })
+        vim.keymap.set('n', '<C-b>', scroll_diff '<C-u>', { buffer = event.buf, desc = 'Scroll diff up half a page' })
       end,
     })
 

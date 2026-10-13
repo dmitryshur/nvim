@@ -100,7 +100,17 @@ vim.keymap.set('n', '<leader>o', '<cmd>tabonly<CR>', { desc = 'Close all other t
 vim.keymap.set('n', '<leader>n', ':Neotree filesystem reveal left toggle<CR>', { desc = 'Toggle Neo-tree' })
 
 vim.keymap.set('n', '<leader>f', function() require('fff').find_files() end, { desc = 'FFF find files' })
-vim.keymap.set('n', '<leader><leader>', function() require('fff').live_grep { resume = true } end, { desc = 'FFF live grep (resumes last)' })
+-- Resuming restores the last query but drops to normal mode: fff schedules a
+-- `stopinsert` once the restored picker is up, with no option to skip it.
+-- Scheduled callbacks run in order, so one queued after it gets the last word
+-- and the prompt comes back ready to type, cursor at the end of the query.
+local resume_live_grep = function()
+  require('fff').live_grep { resume = true }
+  vim.schedule(function()
+    if vim.bo.filetype == 'fff_input' then vim.cmd 'startinsert!' end
+  end)
+end
+vim.keymap.set('n', '<leader><leader>', resume_live_grep, { desc = 'FFF live grep (resumes last)' })
 vim.keymap.set('n', '<tab>', function() require('telescope.builtin').buffers() end, { desc = 'Telescope buffers' })
 vim.keymap.set('n', '<leader>r', function() require('telescope.builtin').resume() end, { desc = 'Telescope resume' })
 vim.keymap.set('n', '<leader>t', '<cmd>Telescope telescope-tabs list_tabs<CR>', { desc = 'Telescope tabs' })
