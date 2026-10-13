@@ -10,8 +10,6 @@ end
 local rtp = vim.opt.rtp
 rtp:prepend(lazypath)
 
-vim.cmd.colorscheme 'zedokai'
-
 require('lazy').setup {
   require 'plugins.sonokai',
   require 'plugins.neotree',
